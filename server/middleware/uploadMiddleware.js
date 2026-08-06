@@ -1,10 +1,18 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+
+// Ensure the uploads directory exists (it won't on a fresh deploy,
+// since Git doesn't track empty folders)
+const uploadDir = "uploads/";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, uploadDir);
   },
 
   filename: (req, file, cb) => {
