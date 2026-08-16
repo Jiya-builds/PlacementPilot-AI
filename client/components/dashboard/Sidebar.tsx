@@ -56,7 +56,7 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3.5 rounded-md px-4 py-3 text-sm transition-all ${
                 active
-                  ? "bg-[var(--pp-amber)]/10 text-[var(--pp-amber)]"
+                  ? "bg-[var(--pp-ink)]/10 text-[var(--pp-ink)]"
                   : "text-[var(--pp-text-muted)] hover:bg-[var(--pp-panel-raised)] hover:text-[var(--pp-text)]"
               }`}
             >
