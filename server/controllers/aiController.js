@@ -9,7 +9,7 @@ import User from "../models/User.js";
 export const testAI = async (req, res) => {
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
       messages: [
         {
           role: "user",
@@ -52,7 +52,7 @@ export const analyzeResume = async (req, res) => {
     const text = await extractPDFText(buffer);
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
       response_format: { type: "json_object" },
       messages: [
         {
@@ -345,7 +345,7 @@ export const generateInterviewQuestions = async (req, res) => {
     }
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
       response_format: { type: "json_object" },
       messages: [
         {
@@ -420,7 +420,7 @@ export const evaluateAnswer = async (req, res) => {
     }
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
       response_format: { type: "json_object" },
       messages: [
         {
