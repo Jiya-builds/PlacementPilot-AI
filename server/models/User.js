@@ -64,93 +64,234 @@ const userSchema = new mongoose.Schema(
     resume: {
       type: String,
       default: "",
-    },analysis: {
-  resumeScore: {
-    type: Number,
-  },
-
-  atsScore: {
-    type: Number,
-  },
-
-  strengths: [
-    {
-      type: String,
     },
-  ],
 
-  weaknesses: [
-    {
-      type: String,
+    /* ============================================================
+       RESUME ANALYSIS
+       ============================================================ */
+
+    analysis: {
+      resumeScore: {
+        type: Number,
+        default: 0,
+      },
+
+      atsScore: {
+        type: Number,
+        default: null,
+      },
+
+      /* ==========================================================
+         ATS DETAILS
+         ========================================================== */
+
+      atsDetails: {
+        jobDescription: {
+          type: String,
+          default: "",
+        },
+
+        matchedSkills: [
+          {
+            type: String,
+          },
+        ],
+
+        missingSkills: [
+          {
+            type: String,
+          },
+        ],
+
+        matchedKeywords: [
+          {
+            type: String,
+          },
+        ],
+
+        missingKeywords: [
+          {
+            type: String,
+          },
+        ],
+
+        experienceMatch: {
+          type: String,
+          default: "",
+        },
+
+        projectMatch: {
+          type: String,
+          default: "",
+        },
+
+        educationMatch: {
+          type: String,
+          default: "",
+        },
+
+        summary: {
+          type: String,
+          default: "",
+        },
+
+        recommendations: [
+          {
+            type: String,
+          },
+        ],
+      },
+
+      /* ==========================================================
+         RESUME INFORMATION
+         ========================================================== */
+
+      skills: [
+        {
+          type: String,
+        },
+      ],
+
+      projects: [
+        {
+          type: mongoose.Schema.Types.Mixed,
+        },
+      ],
+
+      experience: [
+        {
+          type: mongoose.Schema.Types.Mixed,
+        },
+      ],
+
+      education: [
+        {
+          type: mongoose.Schema.Types.Mixed,
+        },
+      ],
+
+      certifications: [
+        {
+          type: mongoose.Schema.Types.Mixed,
+        },
+      ],
+
+      achievements: [
+        {
+          type: mongoose.Schema.Types.Mixed,
+        },
+      ],
+
+      sectionsPresent: [
+        {
+          type: String,
+        },
+      ],
+
+      measurableAchievements: {
+        type: Number,
+        default: 0,
+      },
+
+      strengths: [
+        {
+          type: String,
+        },
+      ],
+
+      weaknesses: [
+        {
+          type: String,
+        },
+      ],
+
+      missingSkills: [
+        {
+          type: String,
+        },
+      ],
+
+      suggestedProjects: [
+        {
+          title: {
+            type: String,
+            default: "",
+          },
+
+          description: {
+            type: String,
+            default: "",
+          },
+
+          technologies: [
+            {
+              type: String,
+            },
+          ],
+        },
+      ],
+
+      interviewQuestions: [
+        {
+          type: String,
+        },
+      ],
+
+      roadmap: {
+        shortTerm: [
+          {
+            type: String,
+          },
+        ],
+
+        midTerm: [
+          {
+            type: String,
+          },
+        ],
+
+        longTerm: [
+          {
+            type: String,
+          },
+        ],
+      },
     },
-  ],
 
-  missingSkills: [
-    {
-      type: String,
-    },
-  ],
+    /* ============================================================
+       INTERVIEW HISTORY
+       ============================================================ */
 
-  suggestedProjects: [
-  {
-    title: { type: String },
-    description: { type: String },
-    technologies: [{ type: String }]
-  }
-],
-
-  interviewQuestions: [
-    {
-      type: String,
-    },
-  ],
-
-  roadmap: {
-    shortTerm: [
+    interviews: [
       {
-        type: String,
+        question: {
+          type: String,
+        },
+
+        answer: {
+          type: String,
+        },
+
+        score: {
+          type: Number,
+          default: 0,
+        },
+
+        feedback: {
+          type: String,
+          default: "",
+        },
+
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
 
-    midTerm: [
-      {
-        type: String,
-      },
-    ],
-
-    longTerm: [
-      {
-        type: String,
-      },
-    ],
-  },
-},
-interviews: [
-  {
-    question: {
-      type: String,
-    },
-
-    answer: {
-      type: String,
-    },
-
-    score: {
-      type: Number,
-      default: 0,
-    },
-
-    feedback: {
-      type: String,
-      default: "",
-    },
-
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-],
+    /* ============================================================
+       USER ROLE
+       ============================================================ */
 
     role: {
       type: String,
@@ -158,6 +299,7 @@ interviews: [
       default: "student",
     },
   },
+
   {
     timestamps: true,
   }
