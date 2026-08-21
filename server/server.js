@@ -22,6 +22,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "https://placement-pilot-ai-dbx5.vercel.app",
       process.env.CLIENT_URL,
     ].filter(Boolean),
     credentials: true,
