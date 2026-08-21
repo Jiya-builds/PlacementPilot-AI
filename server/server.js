@@ -20,6 +20,7 @@ app.use(
       "http://localhost:3000",
       "https://placement-pilot-ai-dbx5.vercel.app",
       "https://placement-pilot-ai-dbx5-qqpmtazwq-jiya4.vercel.app",
+      "https://placement-pilot-ai-dbx5-cc5c38364-jiya4.vercel.app",
     ],
     credentials: true,
   })
