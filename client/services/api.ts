@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://placementpilot-ai-3.onrender.com/api",
+  baseURL: "https://placementpilot-ai-2.onrender.com/api",
 });
 
 
