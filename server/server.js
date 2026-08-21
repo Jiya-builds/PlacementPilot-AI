@@ -18,16 +18,26 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://placement-pilot-ai-dbx5.vercel.app",
-      process.env.CLIENT_URL,
-    ].filter(Boolean),
-    credentials: true,
-  })
-);
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://placement-pilot-ai-dbx5.vercel.app",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
