@@ -22,6 +22,13 @@ app.use(
 );
 app.use(express.json());
 
+app.get("/test-cors", (req, res) => {
+  res.json({
+    success: true,
+    message: "CORS is working",
+  });
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
