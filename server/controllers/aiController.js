@@ -3,25 +3,221 @@ import fs from "fs/promises";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import User from "../models/User.js";
 
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+// Extract JSON safely from AI response
+const extractJSON = (response) => {
+  if (!response || typeof response !== "string") {
+    throw new Error("AI returned an empty response");
+  }
+
+  let cleaned = response
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  // Find first { and last }
+  const jsonStart = cleaned.indexOf("{");
+  const jsonEnd = cleaned.lastIndexOf("}");
+
+  if (jsonStart === -1 || jsonEnd === -1) {
+    throw new Error("AI did not return valid JSON");
+  }
+
+  cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (error) {
+    console.error("JSON PARSE ERROR");
+    console.error("RAW CLEANED RESPONSE:", cleaned);
+
+    throw new Error("Failed to parse AI response as JSON");
+  }
+};
+
+
+// Convert score safely to 0-10
+const normalizeScore10 = (score, fallback = 0) => {
+  const value = Number(score);
+
+  if (Number.isNaN(value)) {
+    return fallback;
+  }
+
+  // If AI accidentally returns percentage
+  if (value > 10) {
+    return Math.min(10, Math.round(value / 10));
+  }
+
+  return Math.max(0, Math.min(10, value));
+};
+
+
+// Normalize analysis data
+const normalizeAnalysis = (analysis, hasJobDescription = false) => {
+  if (!analysis || typeof analysis !== "object") {
+    analysis = {};
+  }
+
+  analysis.resumeScore = normalizeScore10(
+    analysis.resumeScore,
+    0
+  );
+
+  analysis.atsScore = normalizeScore10(
+    analysis.atsScore,
+    0
+  );
+
+
+  // Arrays
+  analysis.strengths = Array.isArray(analysis.strengths)
+    ? analysis.strengths
+    : [];
+
+  analysis.weaknesses = Array.isArray(analysis.weaknesses)
+    ? analysis.weaknesses
+    : [];
+
+  analysis.missingSkills = Array.isArray(analysis.missingSkills)
+    ? analysis.missingSkills
+    : [];
+
+  analysis.interviewQuestions = Array.isArray(
+    analysis.interviewQuestions
+  )
+    ? analysis.interviewQuestions
+    : [];
+
+
+  // Suggested Projects
+  if (!Array.isArray(analysis.suggestedProjects)) {
+    analysis.suggestedProjects = [];
+  }
+
+  analysis.suggestedProjects =
+    analysis.suggestedProjects.map((project) => {
+      if (typeof project === "string") {
+        return {
+          title: project,
+          description: "",
+          technologies: [],
+        };
+      }
+
+      return {
+        title: project?.title || "",
+        description: project?.description || "",
+        technologies: Array.isArray(project?.technologies)
+          ? project.technologies
+          : Array.isArray(project?.skills)
+          ? project.skills
+          : [],
+      };
+    });
+
+
+  // Roadmap
+  if (Array.isArray(analysis.roadmap)) {
+    analysis.roadmap = {
+      shortTerm: analysis.roadmap[0]?.steps || [],
+      midTerm: analysis.roadmap[1]?.steps || [],
+      longTerm: analysis.roadmap[2]?.steps || [],
+    };
+  }
+
+  if (!analysis.roadmap || typeof analysis.roadmap !== "object") {
+    analysis.roadmap = {};
+  }
+
+  analysis.roadmap.shortTerm = Array.isArray(
+    analysis.roadmap.shortTerm
+  )
+    ? analysis.roadmap.shortTerm
+    : [];
+
+  analysis.roadmap.midTerm = Array.isArray(
+    analysis.roadmap.midTerm
+  )
+    ? analysis.roadmap.midTerm
+    : [];
+
+  analysis.roadmap.longTerm = Array.isArray(
+    analysis.roadmap.longTerm
+  )
+    ? analysis.roadmap.longTerm
+    : [];
+
+
+  // Job Match
+  if (hasJobDescription) {
+    if (!analysis.jobMatch || typeof analysis.jobMatch !== "object") {
+      analysis.jobMatch = {
+        matchScore: 0,
+        matchedSkills: [],
+        missingForJob: [],
+        summary: "",
+      };
+    }
+
+    analysis.jobMatch.matchScore = normalizeScore10(
+      analysis.jobMatch.matchScore,
+      0
+    );
+
+    analysis.jobMatch.matchedSkills = Array.isArray(
+      analysis.jobMatch.matchedSkills
+    )
+      ? analysis.jobMatch.matchedSkills
+      : [];
+
+    analysis.jobMatch.missingForJob = Array.isArray(
+      analysis.jobMatch.missingForJob
+    )
+      ? analysis.jobMatch.missingForJob
+      : [];
+
+    analysis.jobMatch.summary =
+      analysis.jobMatch.summary || "";
+  } else {
+    analysis.jobMatch = null;
+  }
+
+  return analysis;
+};
+
+
+/* =====================================================
+   TEST AI
+===================================================== */
+
 export const testAI = async (req, res) => {
   try {
-    const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
-      messages: [
-        {
-          role: "user",
-          content: "Say Hello PlacementPilot AI",
-        },
-      ],
-    });
+    const completion =
+      await groq.chat.completions.create({
+        model: "openai/gpt-oss-20b",
+
+        messages: [
+          {
+            role: "user",
+            content: "Say Hello PlacementPilot AI",
+          },
+        ],
+      });
 
     res.status(200).json({
       success: true,
-      message: completion.choices[0].message.content,
+      message:
+        completion.choices?.[0]?.message?.content ||
+        "No response",
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("TEST AI ERROR:", error);
 
     res.status(500).json({
       success: false,
@@ -29,6 +225,11 @@ export const testAI = async (req, res) => {
     });
   }
 };
+
+
+/* =====================================================
+   ANALYZE RESUME
+===================================================== */
 
 export const analyzeResume = async (req, res) => {
   try {
@@ -43,64 +244,105 @@ export const analyzeResume = async (req, res) => {
     }
 
 
-    const buffer = await fs.readFile(user.resume);
+    /* READ PDF */
 
+    const buffer = await fs.readFile(user.resume);
 
     const text = await extractPDFText(buffer);
 
-    const jobDescription = (user.jobDescription || "").trim();
+
+    if (!text || text.trim().length < 30) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Could not extract enough text from the resume",
+      });
+    }
+
+
+    const jobDescription =
+      (user.jobDescription || "").trim();
+
+
+    /* JOB MATCH INSTRUCTIONS */
 
     const jobMatchInstructions = jobDescription
       ? `
 
-The candidate has also provided a target job description. Compare the
-resume against it and additionally include a "jobMatch" object in the
-JSON with this shape:
+Also include this object:
 
 "jobMatch": {
-  "matchScore": 8,
+  "matchScore": 0,
   "matchedSkills": [],
   "missingForJob": [],
   "summary": ""
 }
 
-Where matchScore is out of 10 (how well the resume fits this specific
-job), matchedSkills are resume skills that align with the job
-description, missingForJob are skills/requirements from the job
-description not evident in the resume, and summary is a 1-2 sentence
-verdict.
+Rules for jobMatch:
+- matchScore must be a NUMBER from 0 to 10
+- matchedSkills must be an array of strings
+- missingForJob must be an array of strings
+- summary must be a short string
 
-Job Description:
+Target Job Description:
+
 ${jobDescription.substring(0, 3000)}
+
 `
       : "";
 
-    const completion = await groq.chat.completions.create({
-     model:"openai/gpt-oss-20b",
 
-      messages: [
-        {
-          role: "system",
-          content:
-          "You are an expert resume analyzer for software engineering placements."
-        },
+    /* AI REQUEST */
 
-        {
-          role: "user",
-          content: `
+    const completion =
+      await groq.chat.completions.create({
 
-Analyze this resume for a software engineering placement candidate.
+        model: "openai/gpt-oss-20b",
 
-Return ONLY valid JSON.
-No markdown.
-No explanations.
-No code blocks.
+        messages: [
 
-Use exactly this format:
+          {
+            role: "system",
+
+            content: `
+You are an expert resume analyzer.
+
+Analyze software engineering resumes accurately.
+
+IMPORTANT OUTPUT RULES:
+
+Return ONLY a valid JSON object.
+
+Do not use markdown.
+
+Do not use triple backticks.
+
+Do not write anything before the opening {.
+
+Do not write anything after the closing }.
+
+All scores must be NUMBERS from 0 to 10.
+
+All arrays must contain valid JSON values.
+
+Do not include comments.
+
+Do not include trailing commas.
+`,
+          },
+
+
+          {
+            role: "user",
+
+            content: `
+Analyze the following resume for software engineering placements.
+
+Return JSON using EXACTLY this structure:
 
 {
-  "resumeScore": 8,
-  "atsScore": 8,
+  "resumeScore": 0,
+  "atsScore": 0,
   "strengths": [],
   "weaknesses": [],
   "missingSkills": [],
@@ -113,171 +355,161 @@ Use exactly this format:
   ],
   "interviewQuestions": [],
   "roadmap": {
-    "shortTerm": [
-      "example step"
-    ],
-    "midTerm": [
-      "example step"
-    ],
-    "longTerm": [
-      "example step"
-    ]
+    "shortTerm": [],
+    "midTerm": [],
+    "longTerm": []
   }
 }
 
-IMPORTANT:
-- roadmap shortTerm, midTerm and longTerm MUST contain at least 3 items each.
-- Do not return empty arrays for roadmap.
-- suggestedProjects must contain title, description and technologies.
+Rules:
+
+1. resumeScore must be between 0 and 10.
+2. atsScore must be between 0 and 10.
+3. strengths must be an array of strings.
+4. weaknesses must be an array of strings.
+5. missingSkills must be an array of strings.
+6. suggestedProjects must contain project objects.
+7. Every project must contain:
+   title,
+   description,
+   technologies.
+8. roadmap must be an object.
+9. shortTerm must contain at least 3 items.
+10. midTerm must contain at least 3 items.
+11. longTerm must contain at least 3 items.
+12. Do not use markdown.
+13. Return ONLY JSON.
+
 ${jobMatchInstructions}
-Resume:
 
-${text.substring(0,4000)}
-`
-        }
-      ],
+RESUME TEXT:
 
-      temperature: 0.2,
-    });
+${text.substring(0, 5000)}
+`,
+          },
+
+        ],
+
+        temperature: 0.2,
+
+      });
 
 
-    const analysis = completion.choices[0].message.content;
-    console.log("AI RESPONSE:", analysis);
-       const cleanJSON = analysis
-  .replaceAll("```json", "")
-  .replaceAll("```", "")
-  .trim();
+    /* GET AI RESPONSE */
 
-  const finalAnalysis = JSON.parse(cleanJSON);
-  if (Array.isArray(finalAnalysis.roadmap)) {
-  if(Array.isArray(finalAnalysis.roadmap)){
+    const response =
+      completion.choices?.[0]?.message?.content;
 
-finalAnalysis.roadmap = {
-  shortTerm: finalAnalysis.roadmap[0]?.steps || [],
-  midTerm: finalAnalysis.roadmap[1]?.steps || [],
-  longTerm: finalAnalysis.roadmap[2]?.steps || []
-};
 
-}
+    console.log(
+      "RAW RESUME AI RESPONSE:",
+      response
+    );
 
-finalAnalysis.roadmap ??= {
-  shortTerm:[],
-  midTerm:[],
-  longTerm:[]
-};
-}
-  finalAnalysis.strengths ??= [];
-finalAnalysis.weaknesses ??= [];
-finalAnalysis.missingSkills ??= [];
 
-finalAnalysis.roadmap ??= {
-shortTerm:[],
-midTerm:[],
-longTerm:[]
-};
+    /* PARSE JSON */
 
-finalAnalysis.suggestedProjects ??= [];
-finalAnalysis.suggestedProjects =
-(finalAnalysis.suggestedProjects || []).map(project => ({
-  title: project.title || "",
-  description: project.description || "",
-  technologies: project.technologies || project.skills || []
-}));
+    const parsedAnalysis =
+      extractJSON(response);
 
-if(!Array.isArray(finalAnalysis.suggestedProjects)){
-finalAnalysis.suggestedProjects=[];
-}
-finalAnalysis.suggestedProjects =
-finalAnalysis.suggestedProjects.map(project=>{
 
-if(typeof project==="string"){
+    /* NORMALIZE */
 
-return{
-title:project,
-description:"",
-technologies:[]
-};
+    const finalAnalysis =
+      normalizeAnalysis(
+        parsedAnalysis,
+        Boolean(jobDescription)
+      );
 
-}
 
-return{
-title:project.title || "",
-description:project.description || "",
-technologies:project.technologies || []
-};
+    console.log(
+      "FINAL ANALYSIS:",
+      JSON.stringify(finalAnalysis, null, 2)
+    );
 
-});
 
-  finalAnalysis.suggestedProjects =
-finalAnalysis.suggestedProjects.map((project)=>{
-
-  if(typeof project === "string"){
-    return {
-      title: project,
-      description: "",
-      technologies:[]
-    };
-  }
-
-  return project;
-
-});
-
-finalAnalysis.jobMatch ??= null;
-if (finalAnalysis.jobMatch) {
-  finalAnalysis.jobMatch.matchedSkills ??= [];
-  finalAnalysis.jobMatch.missingForJob ??= [];
-  finalAnalysis.jobMatch.summary ??= "";
-}
+    /* SAVE */
 
     user.analysis = finalAnalysis;
 
-await user.save();
+    await user.save();
 
-return res.status(200).json({
-  success: true,
-  analysis: finalAnalysis
-});
+
+    return res.status(200).json({
+      success: true,
+      analysis: finalAnalysis,
+    });
 
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "RESUME ANALYSIS ERROR:",
+      error
+    );
 
     return res.status(500).json({
-      success:false,
-      message:error.message
+      success: false,
+      message: error.message,
     });
-
   }
 };
 
+
+/* =====================================================
+   EXTRACT PDF TEXT
+===================================================== */
+
 const extractPDFText = async (buffer) => {
-  const pdf = await pdfjsLib.getDocument({
-    data: new Uint8Array(buffer),
-  }).promise;
+
+  const pdf =
+    await pdfjsLib.getDocument({
+      data: new Uint8Array(buffer),
+    }).promise;
+
 
   let text = "";
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
 
-    const content = await page.getTextContent();
+  for (
+    let i = 1;
+    i <= pdf.numPages;
+    i++
+  ) {
 
-    const pageText = content.items
-      .map((item) => item.str)
-      .join(" ");
+    const page =
+      await pdf.getPage(i);
+
+
+    const content =
+      await page.getTextContent();
+
+
+    const pageText =
+      content.items
+        .map((item) => item.str)
+        .join(" ");
+
 
     text += pageText + "\n";
   }
 
+
   return text;
 };
 
+
+/* =====================================================
+   GET MY ANALYSIS
+===================================================== */
+
 export const getMyAnalysis = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .select("-password");
+
+    const user =
+      await User.findById(req.user.id)
+        .select("-password");
+
 
     if (!user || !user.analysis) {
       return res.status(404).json({
@@ -286,246 +518,352 @@ export const getMyAnalysis = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+
+    return res.status(200).json({
       success: true,
       analysis: user.analysis,
     });
 
-  } catch (error) {
-    console.error(error);
 
-    res.status(500).json({
+  } catch (error) {
+
+    console.error(
+      "GET ANALYSIS ERROR:",
+      error
+    );
+
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-export const generateInterviewQuestions = async (req, res) => {
-  try {
 
-    const user = await User.findById(req.user.id);
+/* =====================================================
+   GENERATE INTERVIEW QUESTIONS
+===================================================== */
 
-    if (!user || !user.analysis) {
-      return res.status(404).json({
-        success: false,
-        message: "Please analyze resume first",
-      });
-    }
+export const generateInterviewQuestions =
+  async (req, res) => {
+
+    try {
+
+      const user =
+        await User.findById(req.user.id);
 
 
-    const completion = await groq.chat.completions.create({
-     model:"openai/gpt-oss-20b",
+      if (!user || !user.analysis) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Please analyze resume first",
+        });
+      }
 
-      messages: [
-        {
-          role: "system",
-          content:
-          "You are an expert technical interviewer for software engineering placements."
-        },
 
-        {
-          role: "user",
-          content: `
-Generate interview questions based on this candidate profile.
+      const completion =
+        await groq.chat.completions.create({
+
+          model: "openai/gpt-oss-20b",
+
+          messages: [
+
+            {
+              role: "system",
+
+              content: `
+You are an expert technical interviewer.
 
 Return ONLY valid JSON.
 
+No markdown.
+No explanations.
+No code blocks.
+`,
+            },
 
 
+            {
+              role: "user",
 
-Do not add markdown.
-Do not add explanations.
-Do not use ** symbols.
-Start response directly with { and end with }.
+              content: `
+Generate interview questions based on this candidate profile.
 
-Generate:
-- technicalQuestions
-- projectQuestions
-- HRQuestions
+Return exactly this JSON structure:
+
+{
+  "technicalQuestions": [],
+  "projectQuestions": [],
+  "HRQuestions": []
+}
 
 Candidate Analysis:
 
 ${JSON.stringify(user.analysis)}
-`
-        }
-      ],
+`,
+            },
 
-      temperature: 0.3,
-    });
+          ],
 
+          temperature: 0.3,
 
-    const response = completion.choices[0].message.content;
-
-console.log("RAW RESPONSE:", response);
-
-const jsonStart = response.indexOf("{");
-const jsonEnd = response.lastIndexOf("}") + 1;
-
-if (jsonStart === -1 || jsonEnd === 0) {
-  return res.status(500).json({
-    success: false,
-    message: "AI returned invalid JSON",
-    raw: response,
-  });
-}
-
-const cleanJSON = response.substring(jsonStart, jsonEnd);
-
-console.log("CLEAN JSON:", cleanJSON);
-const interviewQuestions = JSON.parse(cleanJSON);
-
-return res.status(200).json({
-  success: true,
-  questions: interviewQuestions,
-});
+        });
 
 
-  } catch(error){
+      const response =
+        completion.choices?.[0]?.message?.content;
 
-    console.error(error);
 
-    res.status(500).json({
-      success:false,
-      message:error.message
-    });
+      console.log(
+        "RAW INTERVIEW QUESTIONS:",
+        response
+      );
 
-  }
-};
 
-export const evaluateAnswer = async (req, res) => {
-  try {
+      const interviewQuestions =
+        extractJSON(response);
 
-    const { question, answer } = req.body;
 
-    if (!question || !answer) {
-      return res.status(400).json({
+      return res.status(200).json({
+        success: true,
+        questions: {
+          technicalQuestions:
+            Array.isArray(
+              interviewQuestions.technicalQuestions
+            )
+              ? interviewQuestions.technicalQuestions
+              : [],
+
+          projectQuestions:
+            Array.isArray(
+              interviewQuestions.projectQuestions
+            )
+              ? interviewQuestions.projectQuestions
+              : [],
+
+          HRQuestions:
+            Array.isArray(
+              interviewQuestions.HRQuestions
+            )
+              ? interviewQuestions.HRQuestions
+              : [],
+        },
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "INTERVIEW QUESTIONS ERROR:",
+        error
+      );
+
+      return res.status(500).json({
         success: false,
-        message: "Question and answer required",
+        message: error.message,
       });
     }
 
+  };
 
-    const completion = await groq.chat.completions.create({
-     model:"openai/gpt-oss-20b",
 
-      messages: [
-        {
-          role: "system",
-          content:
-          "You are an expert technical interviewer evaluating software engineering candidates."
-        },
+/* =====================================================
+   EVALUATE ANSWER
+===================================================== */
 
-        {
-          role: "user",
-          content: `
+export const evaluateAnswer =
+  async (req, res) => {
+
+    try {
+
+      const { question, answer } =
+        req.body;
+
+
+      if (!question || !answer) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Question and answer required",
+        });
+      }
+
+
+      const completion =
+        await groq.chat.completions.create({
+
+          model: "openai/gpt-oss-20b",
+
+          messages: [
+
+            {
+              role: "system",
+
+              content: `
+You are an expert technical interviewer.
+
+Return ONLY valid JSON.
+
+Do not use markdown.
+Do not add any text outside JSON.
+`,
+            },
+
+
+            {
+              role: "user",
+
+              content: `
 Evaluate this interview answer.
 
-Return ONLY VALID JSON.
-
-Do NOT write markdown.
-Do NOT use ** or bullets.
-Do NOT explain anything outside JSON.
-
-Format:
+Return exactly:
 
 {
-  "score": 8,
-  "feedback": "....",
-  "improvements": "...."
+  "score": 0,
+  "feedback": "",
+  "improvements": ""
 }
 
+Rules:
+
+- score must be a number from 0 to 10
+- feedback must be a string
+- improvements must be a string
+
 Question:
+
 ${question}
 
 Candidate Answer:
+
 ${answer}
-`
-        }
-      ],
+`,
+            },
 
-      temperature:0.2,
-    });
+          ],
 
+          temperature: 0.2,
 
-    const response = completion.choices[0].message.content;
-
-
-    const jsonStart = response.indexOf("{");
-const jsonEnd = response.lastIndexOf("}") + 1;
-
-if(jsonStart === -1 || jsonEnd === 0){
-
-return res.status(500).json({
-success:false,
-message:"AI returned invalid JSON",
-raw:response
-});
-
-}
-
-const cleanJSON = response.substring(jsonStart,jsonEnd);
-
-const evaluation = JSON.parse(cleanJSON);
-
-// Save in user history
-const user = await User.findById(req.user.id);
-
-user.interviews.push({
-  question,
-  answer,
-  score: evaluation.score,
-  feedback: evaluation.feedback,
-});
-
-await user.save();
-
-return res.status(200).json({
-  success: true,
-  evaluation,
-});
+        });
 
 
-  } catch(error){
+      const response =
+        completion.choices?.[0]?.message?.content;
 
-    console.error(error);
 
-    res.status(500).json({
-      success:false,
-      message:error.message
-    });
+      console.log(
+        "RAW EVALUATION RESPONSE:",
+        response
+      );
 
-  }
-};
 
-export const getInterviewHistory = async (req, res) => {
-  try {
+      const evaluation =
+        extractJSON(response);
 
-    const user = await User.findById(req.user.id)
-      .select("interviews");
 
-    if (!user) {
-      return res.status(404).json({
-        success:false,
-        message:"User not found"
+      evaluation.score =
+        normalizeScore10(
+          evaluation.score,
+          0
+        );
+
+      evaluation.feedback =
+        evaluation.feedback || "";
+
+      evaluation.improvements =
+        evaluation.improvements || "";
+
+
+      /* SAVE INTERVIEW */
+
+      const user =
+        await User.findById(req.user.id);
+
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+
+      user.interviews.push({
+        question,
+        answer,
+        score: evaluation.score,
+        feedback: evaluation.feedback,
+      });
+
+
+      await user.save();
+
+
+      return res.status(200).json({
+        success: true,
+        evaluation,
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "EVALUATE ANSWER ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: error.message,
       });
     }
 
-
-    res.status(200).json({
-      success:true,
-      interviews:user.interviews
-    });
+  };
 
 
-  } catch(error){
+/* =====================================================
+   GET INTERVIEW HISTORY
+===================================================== */
 
-    console.error(error);
+export const getInterviewHistory =
+  async (req, res) => {
 
-    res.status(500).json({
-      success:false,
-      message:error.message
-    });
+    try {
 
-  }
-};
+      const user =
+        await User.findById(req.user.id)
+          .select("interviews");
+
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+
+      return res.status(200).json({
+        success: true,
+        interviews:
+          Array.isArray(user.interviews)
+            ? user.interviews
+            : [],
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "INTERVIEW HISTORY ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+  };
