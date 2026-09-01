@@ -8,7 +8,6 @@ import User from "../models/User.js";
    HELPERS
 ===================================================== */
 
-// Extract JSON safely from AI response
 const extractJSON = (response) => {
   if (!response || typeof response !== "string") {
     throw new Error("AI returned an empty response");
@@ -19,175 +18,40 @@ const extractJSON = (response) => {
     .replace(/```/g, "")
     .trim();
 
-  // Find first { and last }
-  const jsonStart = cleaned.indexOf("{");
-  const jsonEnd = cleaned.lastIndexOf("}");
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
 
-  if (jsonStart === -1 || jsonEnd === -1) {
+  if (start === -1 || end === -1 || end <= start) {
     throw new Error("AI did not return valid JSON");
   }
 
-  cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+  cleaned = cleaned.substring(start, end + 1);
 
   try {
     return JSON.parse(cleaned);
   } catch (error) {
-    console.error("JSON PARSE ERROR");
-    console.error("RAW CLEANED RESPONSE:", cleaned);
+    console.error("JSON PARSE ERROR:", error);
+    console.error("AI RESPONSE:", response);
 
     throw new Error("Failed to parse AI response as JSON");
   }
 };
 
 
-// Convert score safely to 0-10
-const normalizeScore10 = (score, fallback = 0) => {
-  const value = Number(score);
+const normalizePercentage = (value) => {
+  const number = Number(value);
 
-  if (Number.isNaN(value)) {
-    return fallback;
+  if (!Number.isFinite(number)) {
+    return 0;
   }
 
-  // If AI accidentally returns percentage
-  if (value > 10) {
-    return Math.min(10, Math.round(value / 10));
+  // If AI gives 0-10, convert to percentage
+  if (number >= 0 && number <= 10) {
+    return Math.round(number * 10);
   }
 
-  return Math.max(0, Math.min(10, value));
-};
-
-
-// Normalize analysis data
-const normalizeAnalysis = (analysis, hasJobDescription = false) => {
-  if (!analysis || typeof analysis !== "object") {
-    analysis = {};
-  }
-
-  analysis.resumeScore = normalizeScore10(
-    analysis.resumeScore,
-    0
-  );
-
-  analysis.atsScore = normalizeScore10(
-    analysis.atsScore,
-    0
-  );
-
-
-  // Arrays
-  analysis.strengths = Array.isArray(analysis.strengths)
-    ? analysis.strengths
-    : [];
-
-  analysis.weaknesses = Array.isArray(analysis.weaknesses)
-    ? analysis.weaknesses
-    : [];
-
-  analysis.missingSkills = Array.isArray(analysis.missingSkills)
-    ? analysis.missingSkills
-    : [];
-
-  analysis.interviewQuestions = Array.isArray(
-    analysis.interviewQuestions
-  )
-    ? analysis.interviewQuestions
-    : [];
-
-
-  // Suggested Projects
-  if (!Array.isArray(analysis.suggestedProjects)) {
-    analysis.suggestedProjects = [];
-  }
-
-  analysis.suggestedProjects =
-    analysis.suggestedProjects.map((project) => {
-      if (typeof project === "string") {
-        return {
-          title: project,
-          description: "",
-          technologies: [],
-        };
-      }
-
-      return {
-        title: project?.title || "",
-        description: project?.description || "",
-        technologies: Array.isArray(project?.technologies)
-          ? project.technologies
-          : Array.isArray(project?.skills)
-          ? project.skills
-          : [],
-      };
-    });
-
-
-  // Roadmap
-  if (Array.isArray(analysis.roadmap)) {
-    analysis.roadmap = {
-      shortTerm: analysis.roadmap[0]?.steps || [],
-      midTerm: analysis.roadmap[1]?.steps || [],
-      longTerm: analysis.roadmap[2]?.steps || [],
-    };
-  }
-
-  if (!analysis.roadmap || typeof analysis.roadmap !== "object") {
-    analysis.roadmap = {};
-  }
-
-  analysis.roadmap.shortTerm = Array.isArray(
-    analysis.roadmap.shortTerm
-  )
-    ? analysis.roadmap.shortTerm
-    : [];
-
-  analysis.roadmap.midTerm = Array.isArray(
-    analysis.roadmap.midTerm
-  )
-    ? analysis.roadmap.midTerm
-    : [];
-
-  analysis.roadmap.longTerm = Array.isArray(
-    analysis.roadmap.longTerm
-  )
-    ? analysis.roadmap.longTerm
-    : [];
-
-
-  // Job Match
-  if (hasJobDescription) {
-    if (!analysis.jobMatch || typeof analysis.jobMatch !== "object") {
-      analysis.jobMatch = {
-        matchScore: 0,
-        matchedSkills: [],
-        missingForJob: [],
-        summary: "",
-      };
-    }
-
-    analysis.jobMatch.matchScore = normalizeScore10(
-      analysis.jobMatch.matchScore,
-      0
-    );
-
-    analysis.jobMatch.matchedSkills = Array.isArray(
-      analysis.jobMatch.matchedSkills
-    )
-      ? analysis.jobMatch.matchedSkills
-      : [];
-
-    analysis.jobMatch.missingForJob = Array.isArray(
-      analysis.jobMatch.missingForJob
-    )
-      ? analysis.jobMatch.missingForJob
-      : [];
-
-    analysis.jobMatch.summary =
-      analysis.jobMatch.summary || "";
-  } else {
-    analysis.jobMatch = null;
-  }
-
-  return analysis;
+  // Already percentage
+  return Math.max(0, Math.min(100, Math.round(number)));
 };
 
 
@@ -197,29 +61,26 @@ const normalizeAnalysis = (analysis, hasJobDescription = false) => {
 
 export const testAI = async (req, res) => {
   try {
-    const completion =
-      await groq.chat.completions.create({
-        model: "openai/gpt-oss-20b",
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-20b",
 
-        messages: [
-          {
-            role: "user",
-            content: "Say Hello PlacementPilot AI",
-          },
-        ],
-      });
+      messages: [
+        {
+          role: "user",
+          content: "Say Hello PlacementPilot AI",
+        },
+      ],
+    });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message:
-        completion.choices?.[0]?.message?.content ||
-        "No response",
+      message: completion.choices?.[0]?.message?.content || "",
     });
 
   } catch (error) {
     console.error("TEST AI ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -244,32 +105,38 @@ export const analyzeResume = async (req, res) => {
     }
 
 
-    /* READ PDF */
+    /* -----------------------------------------------
+       READ PDF
+    ------------------------------------------------ */
 
     const buffer = await fs.readFile(user.resume);
 
     const text = await extractPDFText(buffer);
 
-
     if (!text || text.trim().length < 30) {
       return res.status(400).json({
         success: false,
-        message:
-          "Could not extract enough text from the resume",
+        message: "Could not extract enough text from resume",
       });
     }
 
 
     const jobDescription =
-      (user.jobDescription || "").trim();
+      typeof user.jobDescription === "string"
+        ? user.jobDescription.trim()
+        : "";
 
 
-    /* JOB MATCH INSTRUCTIONS */
+    /* -----------------------------------------------
+       JOB MATCH
+    ------------------------------------------------ */
 
     const jobMatchInstructions = jobDescription
       ? `
 
-Also include this object:
+The candidate also provided this target job description.
+
+You MUST include a jobMatch object.
 
 "jobMatch": {
   "matchScore": 0,
@@ -278,13 +145,13 @@ Also include this object:
   "summary": ""
 }
 
-Rules for jobMatch:
-- matchScore must be a NUMBER from 0 to 10
-- matchedSkills must be an array of strings
-- missingForJob must be an array of strings
-- summary must be a short string
+Rules:
+- matchScore must be a number from 0 to 100.
+- matchedSkills must be an array of strings.
+- missingForJob must be an array of strings.
+- summary must be a short 1-2 sentence explanation.
 
-Target Job Description:
+TARGET JOB DESCRIPTION:
 
 ${jobDescription.substring(0, 3000)}
 
@@ -292,7 +159,9 @@ ${jobDescription.substring(0, 3000)}
       : "";
 
 
-    /* AI REQUEST */
+    /* -----------------------------------------------
+       AI REQUEST
+    ------------------------------------------------ */
 
     const completion =
       await groq.chat.completions.create({
@@ -305,29 +174,22 @@ ${jobDescription.substring(0, 3000)}
             role: "system",
 
             content: `
-You are an expert resume analyzer.
+You are an expert resume analyzer for software engineering placements.
 
-Analyze software engineering resumes accurately.
+Your job is to carefully analyze the candidate's actual resume.
 
-IMPORTANT OUTPUT RULES:
+Return ONLY valid JSON.
 
-Return ONLY a valid JSON object.
+Do not return markdown.
+Do not return code blocks.
+Do not explain anything outside JSON.
 
-Do not use markdown.
+All scores must be numbers between 0 and 100.
 
-Do not use triple backticks.
+Do not use null for any score.
 
-Do not write anything before the opening {.
-
-Do not write anything after the closing }.
-
-All scores must be NUMBERS from 0 to 10.
-
-All arrays must contain valid JSON values.
-
-Do not include comments.
-
-Do not include trailing commas.
+Always provide strengths, weaknesses, missingSkills,
+suggestedProjects and roadmap.
 `,
           },
 
@@ -336,9 +198,9 @@ Do not include trailing commas.
             role: "user",
 
             content: `
-Analyze the following resume for software engineering placements.
+Analyze this resume for a software engineering placement candidate.
 
-Return JSON using EXACTLY this structure:
+Return EXACTLY this JSON structure:
 
 {
   "resumeScore": 0,
@@ -361,41 +223,72 @@ Return JSON using EXACTLY this structure:
   }
 }
 
-Rules:
+SCORING:
 
-1. resumeScore must be between 0 and 10.
-2. atsScore must be between 0 and 10.
-3. strengths must be an array of strings.
-4. weaknesses must be an array of strings.
-5. missingSkills must be an array of strings.
-6. suggestedProjects must contain project objects.
-7. Every project must contain:
-   title,
-   description,
-   technologies.
-8. roadmap must be an object.
-9. shortTerm must contain at least 3 items.
-10. midTerm must contain at least 3 items.
-11. longTerm must contain at least 3 items.
-12. Do not use markdown.
-13. Return ONLY JSON.
+resumeScore:
+Overall resume quality from 0 to 100.
+
+Consider:
+- resume structure
+- education
+- projects
+- technical skills
+- experience
+- achievements
+- clarity
+- relevance for software engineering placements
+
+atsScore:
+ATS compatibility from 0 to 100.
+
+Consider:
+- relevant keywords
+- technical skills
+- standard sections
+- readability
+- formatting
+- measurable achievements
+- role relevance
+
+IMPORTANT:
+
+1. resumeScore must be 0-100.
+2. atsScore must be 0-100.
+3. Never return null for either score.
+4. strengths must contain at least 3 useful observations.
+5. weaknesses must contain at least 3 useful observations.
+6. missingSkills must contain relevant software engineering skills.
+7. suggestedProjects must contain at least 3 projects.
+8. Each project must have title, description and technologies.
+9. roadmap.shortTerm must contain at least 3 items.
+10. roadmap.midTerm must contain at least 3 items.
+11. roadmap.longTerm must contain at least 3 items.
+12. interviewQuestions must contain useful interview questions.
+13. Do not invent experience that does not exist in the resume.
+14. Return ONLY JSON.
 
 ${jobMatchInstructions}
 
-RESUME TEXT:
+RESUME:
 
-${text.substring(0, 5000)}
+${text.substring(0, 6000)}
 `,
           },
 
         ],
+
+        response_format: {
+          type: "json_object",
+        },
 
         temperature: 0.2,
 
       });
 
 
-    /* GET AI RESPONSE */
+    /* -----------------------------------------------
+       GET RESPONSE
+    ------------------------------------------------ */
 
     const response =
       completion.choices?.[0]?.message?.content;
@@ -407,20 +300,131 @@ ${text.substring(0, 5000)}
     );
 
 
-    /* PARSE JSON */
+    /* -----------------------------------------------
+       PARSE JSON
+    ------------------------------------------------ */
 
-    const parsedAnalysis =
+    const parsed =
       extractJSON(response);
 
 
-    /* NORMALIZE */
+    /* -----------------------------------------------
+       NORMALIZE SCORES
+    ------------------------------------------------ */
 
-    const finalAnalysis =
-      normalizeAnalysis(
-        parsedAnalysis,
-        Boolean(jobDescription)
-      );
+    const finalAnalysis = {
 
+      resumeScore:
+        normalizePercentage(parsed.resumeScore),
+
+      atsScore:
+        normalizePercentage(parsed.atsScore),
+
+
+      strengths:
+        Array.isArray(parsed.strengths)
+          ? parsed.strengths
+          : [],
+
+
+      weaknesses:
+        Array.isArray(parsed.weaknesses)
+          ? parsed.weaknesses
+          : [],
+
+
+      missingSkills:
+        Array.isArray(parsed.missingSkills)
+          ? parsed.missingSkills
+          : [],
+
+
+      suggestedProjects:
+        Array.isArray(parsed.suggestedProjects)
+          ? parsed.suggestedProjects.map((project) => {
+
+              if (typeof project === "string") {
+                return {
+                  title: project,
+                  description: "",
+                  technologies: [],
+                };
+              }
+
+              return {
+                title: project?.title || "",
+                description: project?.description || "",
+                technologies:
+                  Array.isArray(project?.technologies)
+                    ? project.technologies
+                    : [],
+              };
+            })
+          : [],
+
+
+      interviewQuestions:
+        Array.isArray(parsed.interviewQuestions)
+          ? parsed.interviewQuestions
+          : [],
+
+
+      roadmap: {
+
+        shortTerm:
+          Array.isArray(parsed.roadmap?.shortTerm)
+            ? parsed.roadmap.shortTerm
+            : [],
+
+        midTerm:
+          Array.isArray(parsed.roadmap?.midTerm)
+            ? parsed.roadmap.midTerm
+            : [],
+
+        longTerm:
+          Array.isArray(parsed.roadmap?.longTerm)
+            ? parsed.roadmap.longTerm
+            : [],
+      },
+
+
+      jobMatch: null,
+    };
+
+
+    /* -----------------------------------------------
+       JOB MATCH NORMALIZATION
+    ------------------------------------------------ */
+
+    if (jobDescription) {
+
+      const match =
+        parsed.jobMatch || {};
+
+      finalAnalysis.jobMatch = {
+
+        matchScore:
+          normalizePercentage(match.matchScore),
+
+        matchedSkills:
+          Array.isArray(match.matchedSkills)
+            ? match.matchedSkills
+            : [],
+
+        missingForJob:
+          Array.isArray(match.missingForJob)
+            ? match.missingForJob
+            : [],
+
+        summary:
+          match.summary || "",
+      };
+    }
+
+
+    /* -----------------------------------------------
+       LOG FINAL DATA
+    ------------------------------------------------ */
 
     console.log(
       "FINAL ANALYSIS:",
@@ -428,7 +432,9 @@ ${text.substring(0, 5000)}
     );
 
 
-    /* SAVE */
+    /* -----------------------------------------------
+       SAVE TO DATABASE
+    ------------------------------------------------ */
 
     user.analysis = finalAnalysis;
 
@@ -457,7 +463,7 @@ ${text.substring(0, 5000)}
 
 
 /* =====================================================
-   EXTRACT PDF TEXT
+   PDF TEXT EXTRACTION
 ===================================================== */
 
 const extractPDFText = async (buffer) => {
@@ -504,6 +510,7 @@ const extractPDFText = async (buffer) => {
 ===================================================== */
 
 export const getMyAnalysis = async (req, res) => {
+
   try {
 
     const user =
@@ -512,10 +519,12 @@ export const getMyAnalysis = async (req, res) => {
 
 
     if (!user || !user.analysis) {
+
       return res.status(404).json({
         success: false,
         message: "Analysis not found",
       });
+
     }
 
 
@@ -536,6 +545,7 @@ export const getMyAnalysis = async (req, res) => {
       success: false,
       message: error.message,
     });
+
   }
 };
 
@@ -554,11 +564,13 @@ export const generateInterviewQuestions =
 
 
       if (!user || !user.analysis) {
+
         return res.status(404).json({
           success: false,
           message:
             "Please analyze resume first",
         });
+
       }
 
 
@@ -576,10 +588,8 @@ export const generateInterviewQuestions =
 You are an expert technical interviewer.
 
 Return ONLY valid JSON.
-
 No markdown.
 No explanations.
-No code blocks.
 `,
             },
 
@@ -590,7 +600,7 @@ No code blocks.
               content: `
 Generate interview questions based on this candidate profile.
 
-Return exactly this JSON structure:
+Return exactly:
 
 {
   "technicalQuestions": [],
@@ -605,6 +615,10 @@ ${JSON.stringify(user.analysis)}
             },
 
           ],
+
+          response_format: {
+            type: "json_object",
+          },
 
           temperature: 0.3,
 
@@ -621,34 +635,13 @@ ${JSON.stringify(user.analysis)}
       );
 
 
-      const interviewQuestions =
+      const questions =
         extractJSON(response);
 
 
       return res.status(200).json({
         success: true,
-        questions: {
-          technicalQuestions:
-            Array.isArray(
-              interviewQuestions.technicalQuestions
-            )
-              ? interviewQuestions.technicalQuestions
-              : [],
-
-          projectQuestions:
-            Array.isArray(
-              interviewQuestions.projectQuestions
-            )
-              ? interviewQuestions.projectQuestions
-              : [],
-
-          HRQuestions:
-            Array.isArray(
-              interviewQuestions.HRQuestions
-            )
-              ? interviewQuestions.HRQuestions
-              : [],
-        },
+        questions,
       });
 
 
@@ -663,13 +656,14 @@ ${JSON.stringify(user.analysis)}
         success: false,
         message: error.message,
       });
+
     }
 
   };
 
 
 /* =====================================================
-   EVALUATE ANSWER
+   EVALUATE INTERVIEW ANSWER
 ===================================================== */
 
 export const evaluateAnswer =
@@ -677,16 +671,20 @@ export const evaluateAnswer =
 
     try {
 
-      const { question, answer } =
-        req.body;
+      const {
+        question,
+        answer,
+      } = req.body;
 
 
       if (!question || !answer) {
+
         return res.status(400).json({
           success: false,
           message:
             "Question and answer required",
         });
+
       }
 
 
@@ -703,10 +701,9 @@ export const evaluateAnswer =
               content: `
 You are an expert technical interviewer.
 
-Return ONLY valid JSON.
+Evaluate candidates fairly.
 
-Do not use markdown.
-Do not add any text outside JSON.
+Return ONLY valid JSON.
 `,
             },
 
@@ -727,9 +724,9 @@ Return exactly:
 
 Rules:
 
-- score must be a number from 0 to 10
-- feedback must be a string
-- improvements must be a string
+- score must be between 0 and 100.
+- feedback must be a useful explanation.
+- improvements must give actionable advice.
 
 Question:
 
@@ -742,6 +739,10 @@ ${answer}
             },
 
           ],
+
+          response_format: {
+            type: "json_object",
+          },
 
           temperature: 0.2,
 
@@ -763,13 +764,14 @@ ${answer}
 
 
       evaluation.score =
-        normalizeScore10(
-          evaluation.score,
-          0
+        normalizePercentage(
+          evaluation.score
         );
+
 
       evaluation.feedback =
         evaluation.feedback || "";
+
 
       evaluation.improvements =
         evaluation.improvements || "";
@@ -782,18 +784,27 @@ ${answer}
 
 
       if (!user) {
+
         return res.status(404).json({
           success: false,
           message: "User not found",
         });
+
       }
 
 
       user.interviews.push({
+
         question,
+
         answer,
-        score: evaluation.score,
-        feedback: evaluation.feedback,
+
+        score:
+          evaluation.score,
+
+        feedback:
+          evaluation.feedback,
+
       });
 
 
@@ -817,6 +828,7 @@ ${answer}
         success: false,
         message: error.message,
       });
+
     }
 
   };
@@ -837,10 +849,12 @@ export const getInterviewHistory =
 
 
       if (!user) {
+
         return res.status(404).json({
           success: false,
           message: "User not found",
         });
+
       }
 
 
@@ -864,6 +878,7 @@ export const getInterviewHistory =
         success: false,
         message: error.message,
       });
+
     }
 
   };
