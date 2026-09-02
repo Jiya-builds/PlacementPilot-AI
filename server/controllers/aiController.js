@@ -687,7 +687,7 @@ export const testAI =
       const completion =
         await groq.chat.completions.create({
           model:
-            "openai/gpt-oss-20b",
+             "llama-3.3-70b-versatile",
 
           messages: [
             {
