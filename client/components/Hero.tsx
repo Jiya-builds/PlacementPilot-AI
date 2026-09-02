@@ -1,3 +1,4 @@
+
 "use client";
 
 import { motion } from "framer-motion";
@@ -7,7 +8,7 @@ import { useRouter } from "next/navigation";
 const waypoints = [
   { label: "RESUME", status: "SCANNED" },
   { label: "INTERVIEW", status: "IN PROGRESS" },
-  { label: "PLACEMENT", status: "PENDING" },
+  { label: "PLACEMENT", status: "NEXT TARGET" },
 ];
 
 export default function Hero() {
@@ -15,11 +16,12 @@ export default function Hero() {
 
   return (
     <section className="relative overflow-hidden bg-[var(--pp-bg)]">
-      {/* Background Glow — amber, not purple */}
+      {/* Background Glow */}
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[var(--pp-amber)]/[0.06] blur-[180px] rounded-full" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-28 pb-20">
-        {/* Status chip — reads like a flight status readout, not a marketing badge */}
+
+        {/* Status Chip */}
         <motion.div
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -27,17 +29,20 @@ export default function Hero() {
           className="flex justify-center"
         >
           <div className="flex items-center gap-3 border border-[var(--pp-line)] bg-[var(--pp-panel)] rounded-full pl-2 pr-5 py-1.5 font-tabular text-xs tracking-wider">
+
             <span className="flex items-center gap-1.5 rounded-full bg-[var(--pp-green)]/10 text-[var(--pp-green)] px-3 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--pp-green)] animate-pulse" />
-              STATUS: OPEN
+              AI ONLINE
             </span>
+
             <span className="text-[var(--pp-text-muted)]">
-              AI-POWERED PLACEMENT PREP
+              PLACEMENT PREPARATION
             </span>
+
           </div>
         </motion.div>
 
-        {/* Heading */}
+        {/* Main Heading */}
         <motion.h1
           initial={{ opacity: 0, y: 35 }}
           animate={{ opacity: 1, y: 0 }}
@@ -58,11 +63,12 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mt-7 max-w-2xl mx-auto text-center text-lg text-[var(--pp-text-muted)]"
+          className="mt-7 max-w-3xl mx-auto text-center text-lg leading-8 text-[var(--pp-text-muted)]"
         >
-          Resume analysis, ATS scoring, AI mock interviews, and a
-          personalized roadmap — everything you need before you're
-          cleared for takeoff.
+          Analyze your resume, check ATS compatibility, match your
+          profile with real job descriptions, practice AI-powered
+          interviews, and get a personalized roadmap for your
+          placement journey.
         </motion.p>
 
         {/* Buttons */}
@@ -70,13 +76,15 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="mt-11 flex justify-center gap-4"
+          className="mt-11 flex flex-col sm:flex-row justify-center gap-4"
         >
+
           <button
             onClick={() => router.push("/register")}
-            className="group px-7 py-3.5 rounded-lg bg-[var(--pp-amber)] hover:brightness-110 transition text-[var(--pp-bg)] text-base font-semibold flex items-center gap-2"
+            className="group px-7 py-3.5 rounded-lg bg-[var(--pp-amber)] hover:brightness-110 transition text-[var(--pp-bg)] text-base font-semibold flex items-center justify-center gap-2"
           >
             Analyze My Resume
+
             <ArrowRight
               className="group-hover:translate-x-1 transition"
               size={18}
@@ -92,33 +100,44 @@ export default function Hero() {
           >
             See How It Works
           </button>
+
         </motion.div>
 
-        {/* Signature element: the flight path — a student's route from
-            resume to placement, rendered as waypoints on a course line,
-            not a generic floating stat card. */}
+        {/* Placement Journey */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
           className="mt-24 max-w-3xl mx-auto"
         >
+
           <div className="flex items-center justify-between font-tabular text-[11px] tracking-wider text-[var(--pp-text-faint)] mb-3 px-1">
+
             <span className="flex items-center gap-1.5">
-              <Radar size={12} className="text-[var(--pp-amber)]" />
-              YOUR ROUTE
+              <Radar
+                size={12}
+                className="text-[var(--pp-amber)]"
+              />
+              YOUR PLACEMENT JOURNEY
             </span>
-            <span>ETA: NEXT PLACEMENT CYCLE</span>
+
+            <span>
+              AI-GUIDED PREPARATION
+            </span>
+
           </div>
 
           <div className="relative flex items-center justify-between px-1">
+
             <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] pp-flight-path" />
 
             {waypoints.map((wp, i) => (
+
               <div
                 key={wp.label}
                 className="relative z-10 flex flex-col items-center gap-2 bg-[var(--pp-bg)] px-3"
               >
+
                 <div
                   className={`w-3 h-3 rounded-full border-2 ${
                     i === 0
@@ -128,9 +147,11 @@ export default function Hero() {
                       : "bg-transparent border-[var(--pp-text-faint)]"
                   }`}
                 />
+
                 <span className="font-tabular text-xs tracking-wider text-[var(--pp-text)]">
                   {wp.label}
                 </span>
+
                 <span
                   className={`font-tabular text-[10px] tracking-wider ${
                     i === 0
@@ -142,11 +163,17 @@ export default function Hero() {
                 >
                   {wp.status}
                 </span>
+
               </div>
+
             ))}
+
           </div>
+
         </motion.div>
+
       </div>
     </section>
   );
 }
+
