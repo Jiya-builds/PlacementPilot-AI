@@ -1,5 +1,6 @@
 import groq from "../services/aiService.js";
 import fs from "fs/promises";
+import path from "path";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import User from "../models/User.js";
 
@@ -23,9 +24,7 @@ const extractJSON = (response) => {
   if (start === -1 || end === -1 || end <= start) {
     console.error("INVALID AI RESPONSE:", response);
 
-    throw new Error(
-      "AI did not return a valid JSON object"
-    );
+    throw new Error("AI did not return a valid JSON object");
   }
 
   cleaned = cleaned.substring(start, end + 1);
@@ -33,20 +32,28 @@ const extractJSON = (response) => {
   try {
     return JSON.parse(cleaned);
   } catch (error) {
-    console.error(
-      "JSON PARSE ERROR:",
-      error.message
-    );
+    console.error("JSON PARSE ERROR:", error.message);
+    console.error("RAW AI RESPONSE:", response);
 
-    console.error(
-      "RAW AI RESPONSE:",
-      response
-    );
-
-    throw new Error(
-      "Failed to parse AI response as JSON"
-    );
+    throw new Error("Failed to parse AI response as JSON");
   }
+};
+
+
+/* =====================================================
+   RESUME PATH HELPER
+===================================================== */
+
+const getResumeFilePath = (resumePath) => {
+  if (!resumePath) {
+    throw new Error("Resume file path is missing");
+  }
+
+  if (path.isAbsolute(resumePath)) {
+    return resumePath;
+  }
+
+  return path.resolve(process.cwd(), resumePath);
 };
 
 
@@ -230,15 +237,15 @@ const validateResumeAnalysis = (
   }
 
 
-  /* JOB MATCH VALIDATION */
+  /* =================================================
+     JOB MATCH VALIDATION
+  ================================================= */
 
   if (hasJobDescription) {
     const jobMatch = data?.jobMatch;
 
     if (!jobMatch) {
-      errors.push(
-        "jobMatch is missing"
-      );
+      errors.push("jobMatch is missing");
     } else {
       const matchScore =
         normalizeScore(
@@ -272,8 +279,7 @@ const validateResumeAnalysis = (
       }
 
       if (
-        typeof jobMatch.summary !==
-          "string" ||
+        typeof jobMatch.summary !== "string" ||
         jobMatch.summary.trim().length === 0
       ) {
         errors.push(
@@ -369,6 +375,10 @@ const cleanResumeAnalysis = (
   };
 
 
+  /* =================================================
+     JOB MATCH CLEANING
+  ================================================= */
+
   if (
     hasJobDescription &&
     parsed.jobMatch
@@ -422,9 +432,7 @@ const extractPDFText = async (
         new Uint8Array(buffer),
     }).promise;
 
-
   let text = "";
-
 
   for (
     let i = 1;
@@ -446,7 +454,6 @@ const extractPDFText = async (
 
     text += pageText + "\n";
   }
-
 
   return text;
 };
@@ -485,6 +492,10 @@ Do not return only the corrected fields.
       : "";
 
 
+  /* =================================================
+     JOB DESCRIPTION
+  ================================================= */
+
   const jobInstructions =
     hasJobDescription
       ? `
@@ -510,13 +521,16 @@ jobMatch rules:
 - matchedSkills must be an array.
 - missingForJob must be an array.
 - summary must not be empty.
+- Compare the actual resume against the job description.
+- Do not assume skills that are not present in the resume.
 `
       : "";
 
 
   const completion =
     await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
+
       temperature: 0.1,
 
       messages: [
@@ -646,6 +660,8 @@ atsScore = ATS compatibility based on:
 - measurable achievements
 - software engineering relevance
 
+Do NOT give a high score just because the resume looks good.
+
 ${jobInstructions}
 
 ${correctionInstructions}
@@ -687,7 +703,7 @@ export const testAI =
       const completion =
         await groq.chat.completions.create({
           model:
-             "llama-3.3-70b-versatile",
+            "openai/gpt-oss-20b",
 
           messages: [
             {
@@ -719,6 +735,7 @@ export const testAI =
 
       return res.status(500).json({
         success: false,
+
         message:
           error.message,
       });
@@ -752,12 +769,54 @@ export const analyzeResume =
       }
 
 
-      /* READ PDF */
+      /* =================================================
+         READ PDF
+      ================================================= */
+
+      const resumePath =
+        getResumeFilePath(
+          user.resume
+        );
+
+      console.log(
+        "RESUME PATH FROM DB:",
+        user.resume
+      );
+
+      console.log(
+        "RESOLVED RESUME PATH:",
+        resumePath
+      );
+
+
+      /* =================================================
+         CHECK FILE EXISTS
+      ================================================= */
+
+      try {
+        await fs.access(
+          resumePath
+        );
+      } catch {
+        console.error(
+          "RESUME FILE DOES NOT EXIST:",
+          resumePath
+        );
+
+        return res.status(404).json({
+          success: false,
+
+          message:
+            "Resume file not found on server. Please upload your resume again.",
+        });
+      }
+
 
       const buffer =
         await fs.readFile(
-          user.resume
+          resumePath
         );
+
 
       const text =
         await extractPDFText(
@@ -791,9 +850,9 @@ export const analyzeResume =
         );
 
 
-      /* ---------------------------------------------
+      /* =================================================
          AI ATTEMPT 1
-      --------------------------------------------- */
+      ================================================= */
 
       let parsed =
         await generateResumeAnalysis({
@@ -816,9 +875,9 @@ export const analyzeResume =
       );
 
 
-      /* ---------------------------------------------
-         AI RETRY IF RESPONSE INCOMPLETE
-      --------------------------------------------- */
+      /* =================================================
+         AI RETRY
+      ================================================= */
 
       if (!validation.valid) {
         console.log(
@@ -851,9 +910,9 @@ export const analyzeResume =
       }
 
 
-      /* ---------------------------------------------
+      /* =================================================
          FINAL FAILURE
-      --------------------------------------------- */
+      ================================================= */
 
       if (!validation.valid) {
         return res.status(422).json({
@@ -868,9 +927,9 @@ export const analyzeResume =
       }
 
 
-      /* ---------------------------------------------
+      /* =================================================
          CLEAN DATA
-      --------------------------------------------- */
+      ================================================= */
 
       const finalAnalysis =
         cleanResumeAnalysis(
@@ -889,9 +948,9 @@ export const analyzeResume =
       );
 
 
-      /* ---------------------------------------------
+      /* =================================================
          SAVE
-      --------------------------------------------- */
+      ================================================= */
 
       user.analysis =
         finalAnalysis;
@@ -1065,6 +1124,7 @@ ${JSON.stringify(
 
       return res.status(200).json({
         success: true,
+
         questions,
       });
 
@@ -1078,6 +1138,7 @@ ${JSON.stringify(
 
       return res.status(500).json({
         success: false,
+
         message:
           error.message,
       });
