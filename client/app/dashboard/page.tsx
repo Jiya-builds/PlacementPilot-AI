@@ -17,378 +17,253 @@ import {
   Lightbulb,
 } from "lucide-react";
 
+
 export default function DashboardPage() {
+
   const router = useRouter();
 
   const [analysis, setAnalysis] = useState<any>(null);
-  const [interviewScore, setInterviewScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
+
+
   useEffect(() => {
-    const fetchData = async () => {
+
+    const fetchAnalysis = async () => {
+
       try {
-        // Fetch Resume Analysis
-        const analysisRes = await api.get("/ai/resume-analysis");
 
-        console.log("ANALYSIS DATA:", analysisRes.data);
+        const res = await api.get(
+          "/ai/resume-analysis"
+        );
 
-        setAnalysis(analysisRes.data.analysis);
+        console.log("ANALYSIS DATA:", res.data);
 
-        // Fetch Interview History
-        try {
-          const interviewRes = await api.get("/ai/interview-history");
+        setAnalysis(res.data.analysis);
 
-          const interviews = interviewRes.data.interviews || [];
 
-          if (interviews.length > 0) {
-            const avg =
-              interviews.reduce(
-                (sum: number, iv: any) =>
-                  sum + Number(iv.score || 0),
-                0
-              ) / interviews.length;
+      } catch(error:any){
 
-            setInterviewScore(avg);
-          }
-        } catch (error: any) {
-          console.log(
-            "INTERVIEW SCORE ERROR:",
-            error.response?.data || error.message
-          );
-        }
-      } catch (error: any) {
         console.log(
           "ANALYSIS ERROR:",
           error.response?.data || error.message
         );
-      } finally {
+
+      }
+      finally{
         setLoading(false);
       }
+
     };
 
-    fetchData();
+
+    fetchAnalysis();
+
   }, []);
 
-  /*
-    SCORE NORMALIZER
 
-    Handles both:
-    0 - 10 scores  -> converts to 0 - 100
-    0 - 100 scores -> keeps as is
-  */
-  const normalizeScore = (score: any) => {
-    const value = Number(score || 0);
 
-    if (value <= 10) {
-      return Math.round(value * 10);
-    }
 
-    return Math.round(value);
-  };
+  if(loading){
 
-  // Resume Score
-  const resumeScore = normalizeScore(analysis?.resumeScore);
+    return(
+      <div className="min-h-screen bg-white flex items-center justify-center">
 
-  // ATS Score
-  const atsScore = normalizeScore(analysis?.atsScore);
-
-  // Interview Score
-  const normalizedInterviewScore =
-    interviewScore !== null
-      ? normalizeScore(interviewScore)
-      : null;
-
-  /*
-    PLACEMENT READINESS
-
-    Only averages available scores.
-
-    Example:
-    Resume = 95
-    ATS = 80
-    Interview = N/A
-
-    => (95 + 80) / 2
-  */
-  const availableScores: number[] = [
-    resumeScore,
-    atsScore,
-  ];
-
-  if (normalizedInterviewScore !== null) {
-    availableScores.push(normalizedInterviewScore);
-  }
-
-  const placementReadiness =
-    availableScores.length > 0
-      ? Math.round(
-          availableScores.reduce(
-            (sum, score) => sum + score,
-            0
-          ) / availableScores.length
-        )
-      : 0;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--pp-bg)] flex items-center justify-center">
-        <h1 className="text-[var(--pp-text)] text-xl">
+        <h1 className="text-gray-900 text-xl">
           Loading Dashboard...
         </h1>
+
       </div>
-    );
+    )
+
   }
 
+
+
   return (
+
     <>
-      <Topbar />
 
-      <div className="min-h-screen bg-[var(--pp-bg)] p-8">
-        {/* BUTTONS */}
+    <Topbar />
 
-        <div className="flex gap-4 mb-8">
-          <button
-            onClick={() => router.push("/resume")}
-            className="px-6 py-3 rounded-xl bg-[var(--pp-ink)] text-[var(--pp-text)] font-semibold hover:scale-105 transition"
-          >
-            📄 Upload Resume
-          </button>
 
-          <button
-            onClick={() => router.push("/interview")}
-            className="px-6 py-3 rounded-xl bg-[var(--pp-ink-soft)] text-[var(--pp-text)] font-semibold hover:scale-105 transition"
-          >
-            🤖 Start Interview
-          </button>
+    <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8">
 
-          <button
-            onClick={() => router.push("/profile")}
-            className="px-6 py-3 rounded-xl bg-[var(--pp-panel-raised)] border border-[var(--pp-line)] text-[var(--pp-text)]"
-          >
-            👤 Profile
-          </button>
-        </div>
 
-        {/* STATS */}
+      {/* BUTTONS */}
 
-        <div className="grid lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Resume Score"
-            value={`${resumeScore}%`}
-            subtitle="AI Resume Rating"
-            color="text-[var(--pp-pass)]"
-            icon={FileText}
-          />
+      <div className="flex flex-wrap gap-3 sm:gap-4 mb-6 md:mb-8">
 
-          <StatCard
-            title="ATS Score"
-            value={`${atsScore}%`}
-            subtitle="Recruiter Compatibility"
-            color="text-[var(--pp-ink)]"
-            icon={Target}
-          />
 
-          <StatCard
-            title="Interview Score"
-            value={
-              normalizedInterviewScore !== null
-                ? `${normalizedInterviewScore}%`
-                : "N/A"
-            }
-            subtitle={
-              normalizedInterviewScore !== null
-                ? "Based on your interviews"
-                : "Practice an interview first"
-            }
-            color="text-[var(--pp-gold)]"
-            icon={Brain}
-          />
+        <button
+        onClick={()=>router.push("/resume")}
+        className="px-6 py-3 rounded-xl bg-orange-600 text-white font-semibold hover:scale-105 transition"
+        >
+          📄 Upload Resume
+        </button>
 
-          <StatCard
-            title="Placement Readiness"
-            value={`${placementReadiness}%`}
-            subtitle="Overall Score"
-            color="text-[var(--pp-ink)]"
-            icon={TrendingUp}
-          />
-        </div>
 
-        {/* INSIGHTS */}
 
-        <div className="grid lg:grid-cols-3 gap-6 mt-8">
-          {/* STRENGTHS */}
+        <button
+        onClick={()=>router.push("/interview")}
+        className="px-6 py-3 rounded-xl bg-amber-600 text-white font-semibold hover:scale-105 transition"
+        >
+          🤖 Start Interview
+        </button>
 
-          <div className="rounded-3xl border border-[var(--pp-line)] bg-[var(--pp-panel)] p-6">
-            <div className="flex gap-3 items-center mb-5">
-              <CheckCircle className="text-[var(--pp-pass)]" />
 
-              <h2 className="text-[var(--pp-text)] text-xl">
-                Strengths
-              </h2>
-            </div>
 
-            {analysis?.strengths?.length > 0 ? (
-              analysis.strengths.map(
-                (x: string, i: number) => (
-                  <p
-                    key={i}
-                    className="text-[var(--pp-text-muted)] bg-[var(--pp-panel)] p-3 rounded-xl mb-2"
-                  >
-                    ✓ {x}
-                  </p>
-                )
-              )
-            ) : (
-              <p className="text-[var(--pp-text-faint)]">
-                Upload a resume to see your strengths.
-              </p>
-            )}
-          </div>
+        <button
+        onClick={()=>router.push("/profile")}
+        className="px-6 py-3 rounded-xl bg-orange-100/70 border border-orange-200 text-gray-900"
+        >
+          👤 Profile
+        </button>
 
-          {/* IMPROVE */}
 
-          <div className="rounded-3xl border border-[var(--pp-line)] bg-[var(--pp-panel)] p-6">
-            <div className="flex gap-3 items-center mb-5">
-              <AlertTriangle className="text-[var(--pp-gold)]" />
-
-              <h2 className="text-[var(--pp-text)] text-xl">
-                Improve
-              </h2>
-            </div>
-
-            {analysis?.weaknesses?.length > 0 ? (
-              analysis.weaknesses.map(
-                (x: string, i: number) => (
-                  <p
-                    key={i}
-                    className="text-[var(--pp-text-muted)] bg-[var(--pp-panel)] p-3 rounded-xl mb-2"
-                  >
-                    ⚠ {x}
-                  </p>
-                )
-              )
-            ) : (
-              <p className="text-[var(--pp-text-faint)]">
-                No major weaknesses found.
-              </p>
-            )}
-          </div>
-
-          {/* MISSING SKILLS */}
-
-          <div className="rounded-3xl border border-[var(--pp-line)] bg-[var(--pp-panel)] p-6">
-            <div className="flex gap-3 items-center mb-5">
-              <Lightbulb className="text-[var(--pp-ink)]" />
-
-              <h2 className="text-[var(--pp-text)] text-xl">
-                Missing Skills
-              </h2>
-            </div>
-
-            {analysis?.missingSkills?.length > 0 ? (
-              analysis.missingSkills.map(
-                (x: string, i: number) => (
-                  <p
-                    key={i}
-                    className="text-[var(--pp-text-muted)] bg-[var(--pp-panel)] p-3 rounded-xl mb-2"
-                  >
-                    🚀 {x}
-                  </p>
-                )
-              )
-            ) : (
-              <p className="text-[var(--pp-text-faint)]">
-                No missing skills found.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* JOB MATCH */}
-
-        {analysis?.jobMatch && (
-          <div className="mt-8 rounded-3xl border border-[var(--pp-line)] bg-[var(--pp-panel)] p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex gap-3 items-center">
-                <Target className="text-[var(--pp-ink)]" />
-
-                <h2 className="text-[var(--pp-text)] text-xl">
-                  Job Match
-                </h2>
-              </div>
-
-              <span className="font-tabular text-2xl font-semibold text-[var(--pp-ink)]">
-                {normalizeScore(
-                  analysis.jobMatch.matchScore
-                )}
-                %
-              </span>
-            </div>
-
-            {analysis.jobMatch.summary && (
-              <p className="text-[var(--pp-text-muted)] mb-5">
-                {analysis.jobMatch.summary}
-              </p>
-            )}
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* MATCHED SKILLS */}
-
-              <div>
-                <p className="text-xs tracking-wider text-[var(--pp-text-faint)] mb-2">
-                  MATCHED SKILLS
-                </p>
-
-                <div className="flex flex-wrap gap-2">
-                  {analysis.jobMatch.matchedSkills?.length ? (
-                    analysis.jobMatch.matchedSkills.map(
-                      (s: string, i: number) => (
-                        <span
-                          key={i}
-                          className="text-xs px-3 py-1.5 rounded-full bg-[var(--pp-pass)]/10 text-[var(--pp-pass)]"
-                        >
-                          {s}
-                        </span>
-                      )
-                    )
-                  ) : (
-                    <p className="text-sm text-[var(--pp-text-faint)]">
-                      None found
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* MISSING FOR JOB */}
-
-              <div>
-                <p className="text-xs tracking-wider text-[var(--pp-text-faint)] mb-2">
-                  MISSING FOR THIS ROLE
-                </p>
-
-                <div className="flex flex-wrap gap-2">
-                  {analysis.jobMatch.missingForJob?.length ? (
-                    analysis.jobMatch.missingForJob.map(
-                      (s: string, i: number) => (
-                        <span
-                          key={i}
-                          className="text-xs px-3 py-1.5 rounded-full bg-[var(--pp-red)]/10 text-[var(--pp-red)]"
-                        >
-                          {s}
-                        </span>
-                      )
-                    )
-                  ) : (
-                    <p className="text-sm text-[var(--pp-text-faint)]">
-                      None — great fit!
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+
+
+
+
+      {/* STATS */}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+
+
+      <StatCard
+      title="Resume Score"
+      value={`${(analysis?.resumeScore || 0)*10}%`}
+      subtitle="AI Resume Rating"
+      color="text-green-600"
+      icon={FileText}
+      />
+
+
+
+      <StatCard
+      title="ATS Score"
+      value={`${(analysis?.atsScore || 0)*10}%`}
+      subtitle="Recruiter Compatibility"
+      color="text-yellow-600"
+      icon={Target}
+      />
+
+
+
+      <StatCard
+      title="Interview Score"
+      value="85%"
+      subtitle="AI Prediction"
+      color="text-amber-600"
+      icon={Brain}
+      />
+
+
+
+      <StatCard
+      title="Placement Readiness"
+      value={`${Math.round((((analysis?.resumeScore||0)+(analysis?.atsScore||0))/2)*10)}%`}
+      subtitle="Overall Score"
+      color="text-orange-600"
+      icon={TrendingUp}
+      />
+
+
+      </div>
+
+
+
+
+
+      {/* INSIGHTS */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mt-8">
+
+
+      <div className="rounded-3xl border border-orange-200 bg-orange-50 p-6">
+
+      <div className="flex gap-3 items-center mb-5">
+      <CheckCircle className="text-green-600"/>
+      <h2 className="text-gray-900 text-xl">
+      Strengths
+      </h2>
+      </div>
+
+
+      {
+      analysis?.strengths?.map((x:string,i:number)=>(
+        <p key={i} className="text-gray-700 bg-orange-50 p-3 rounded-xl mb-2">
+          ✓ {x}
+        </p>
+      ))
+      }
+
+
+      </div>
+
+
+
+
+
+      <div className="rounded-3xl border border-orange-200 bg-orange-50 p-6">
+
+      <div className="flex gap-3 items-center mb-5">
+      <AlertTriangle className="text-amber-600"/>
+      <h2 className="text-gray-900 text-xl">
+      Improve
+      </h2>
+      </div>
+
+
+      {
+      analysis?.weaknesses?.map((x:string,i:number)=>(
+        <p key={i} className="text-gray-700 bg-orange-50 p-3 rounded-xl mb-2">
+          ⚠ {x}
+        </p>
+      ))
+      }
+
+
+      </div>
+
+
+
+
+
+
+      <div className="rounded-3xl border border-orange-200 bg-orange-50 p-6">
+
+      <div className="flex gap-3 items-center mb-5">
+      <Lightbulb className="text-orange-600"/>
+      <h2 className="text-gray-900 text-xl">
+      Missing Skills
+      </h2>
+      </div>
+
+
+      {
+      analysis?.missingSkills?.map((x:string,i:number)=>(
+        <p key={i} className="text-gray-700 bg-orange-50 p-3 rounded-xl mb-2">
+          🚀 {x}
+        </p>
+      ))
+      }
+
+
+      </div>
+
+
+
+      </div>
+
+
+    </div>
+
+
     </>
+
   );
+
 }

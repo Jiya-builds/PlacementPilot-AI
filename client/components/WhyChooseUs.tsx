@@ -45,19 +45,19 @@ const features = [
 
 export default function WhyChooseUs() {
   return (
-    <section id="about" className="py-28 px-6">
+    <section className="py-16 md:py-28 px-6">
       <div className="max-w-7xl mx-auto">
 
         <div className="text-center mb-16">
-          <span className="px-4 py-2 rounded-full bg-[var(--pp-ink)]/10 text-[var(--pp-ink)] border border-[var(--pp-ink)]/25">
+          <span className="px-4 py-2 rounded-full bg-orange-500/10 text-orange-700 border border-orange-500/20">
             Why Choose Us
           </span>
 
-          <h2 className="text-5xl font-bold mt-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mt-6">
             Everything You Need to Ace Placements
           </h2>
 
-          <p className="text-[var(--pp-text-muted)] mt-5 max-w-2xl mx-auto">
+          <p className="text-gray-600 mt-5 max-w-2xl mx-auto">
             PlacementPilot AI combines resume analysis, AI interviews,
             career guidance and progress tracking into one platform.
           </p>
@@ -76,17 +76,17 @@ export default function WhyChooseUs() {
                   scale: 1.02,
                 }}
                 transition={{ duration: 0.25 }}
-                className="rounded-3xl border border-[var(--pp-line)] bg-[var(--pp-panel)] backdrop-blur-xl p-8 hover:border-purple-500"
+                className="rounded-3xl border border-orange-200 bg-orange-50 backdrop-blur-xl p-8 hover:border-orange-500"
               >
-                <div className="w-14 h-14 rounded-2xl bg-[var(--pp-ink)]/15 flex items-center justify-center">
-                  <Icon className="text-[var(--pp-ink)]" size={28} />
+                <div className="w-14 h-14 rounded-2xl bg-orange-500/20 flex items-center justify-center">
+                  <Icon className="text-orange-600" size={28} />
                 </div>
 
                 <h3 className="text-2xl font-semibold mt-6">
                   {item.title}
                 </h3>
 
-                <p className="text-[var(--pp-text-muted)] mt-4 leading-7">
+                <p className="text-gray-600 mt-4 leading-7">
                   {item.desc}
                 </p>
               </motion.div>

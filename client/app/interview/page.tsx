@@ -1,218 +1,343 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import api from "@/services/api";
 
-type Feedback = {
-  score: number;
-  feedback: string;
-  improvements: string;
+export default function InterviewPage(){
+
+const [question,setQuestion]=useState("");
+const [answer,setAnswer]=useState("");
+const [feedback,setFeedback]=useState<any>(null);
+const [loading,setLoading]=useState(false);
+
+const [questions,setQuestions] = useState<any[]>([]);
+const [current,setCurrent] = useState(0);
+const [scores,setScores] = useState<number[]>([]);
+
+
+
+const generateQuestion = async()=>{
+
+try{
+
+setLoading(true);
+
+const res = await api.get(
+"/ai/generate-questions"
+);
+
+
+const data = res.data.questions;
+
+
+const allQuestions = [
+  ...data.technicalQuestions,
+  ...data.projectQuestions,
+  ...data.HRQuestions
+];
+
+
+setQuestions(allQuestions);
+
+setCurrent(0);
+
+setQuestion(
+  typeof allQuestions[0] === "string"
+  ? allQuestions[0]
+  : allQuestions[0].question
+);
+
+setFeedback(null);
+
+
+}catch(error:any){
+
+console.log(
+error.response?.data || error.message
+);
+
+}
+
+finally{
+
+setLoading(false);
+
+}
+
 };
 
-export default function InterviewPage() {
-  const router = useRouter();
 
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [current, setCurrent] = useState(0);
-  const [scores, setScores] = useState<number[]>([]);
-  const [started, setStarted] = useState(false);
-  const [finished, setFinished] = useState(false);
 
-  const getQuestionText = (q: any) =>
-    typeof q === "string" ? q : q?.question ?? "";
 
-  const generateQuestion = async () => {
-    try {
-      setLoading(true);
 
-      const res = await api.get("/ai/generate-questions");
 
-      const data = res.data.questions;
+const submitAnswer = async()=>{
 
-      const allQuestions = [
-        ...(data.technicalQuestions || []),
-        ...(data.projectQuestions || []),
-        ...(data.HRQuestions || []),
-      ];
+  console.log("SUBMIT FUNCTION RUNNING");
 
-      setQuestions(allQuestions);
-      setCurrent(0);
-      setQuestion(getQuestionText(allQuestions[0]));
-      setAnswer("");
-      setFeedback(null);
-      setScores([]);
-      setStarted(true);
-      setFinished(false);
-    } catch (error: any) {
-      console.log("GENERATE QUESTIONS ERROR:", error.response?.data || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if(!answer.trim()){
+    alert("Please write answer");
+    return;
+  }
 
-  const submitAnswer = async () => {
-    if (!answer.trim()) {
-      alert("Please write answer");
-      return;
-    }
+  try{
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const res = await api.post("/ai/evaluate-answer", {
+    const res = await api.post(
+      "/ai/evaluate-answer",
+      {
         question,
-        answer,
-      });
+        answer
+      }
+    );
 
-      const evaluation = res.data.evaluation;
 
-      setFeedback(evaluation);
-      setScores((prev) => [...prev, evaluation.score]);
-    } catch (error: any) {
-      console.log("EVALUATE ERROR:", error.response?.data || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log("EVALUATION RESPONSE:", res.data);
 
-  const goToNextQuestion = () => {
-    const nextIndex = current + 1;
 
-    if (nextIndex >= questions.length) {
-      // No more questions — show the completion summary
-      setFinished(true);
-      return;
-    }
+    const evaluation = res.data.evaluation;
 
-    setCurrent(nextIndex);
-    setQuestion(getQuestionText(questions[nextIndex]));
-    setAnswer("");
-    setFeedback(null);
-  };
 
-  const isLastQuestion = current === questions.length - 1;
+    setFeedback(evaluation);
 
-  return (
-    <div className="min-h-screen bg-[var(--pp-bg)] p-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-[var(--pp-text)]">AI Mock Interview 🤖</h1>
 
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="text-[var(--pp-text-muted)] hover:text-[var(--pp-text)] text-sm"
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
+    setScores([
+      ...scores,
+      evaluation.score
+    ]);
 
-      {!finished && (
-        <button
-          onClick={generateQuestion}
-          disabled={loading}
-          className="bg-[var(--pp-ink)] px-6 py-3 rounded-xl text-[var(--pp-text)] disabled:opacity-60"
-        >
-          {loading && !started
-            ? "Generating..."
-            : started
-            ? "Restart Interview"
-            : "Start Interview"}
-        </button>
-      )}
 
-      {started && !finished && question && (
-        <div className="mt-8 max-w-3xl bg-[var(--pp-panel)] border border-[var(--pp-line)] rounded-3xl p-8">
-          <h2 className="text-[var(--pp-ink)] mb-4">
-            Question {current + 1} / {questions.length}
-          </h2>
+  }catch(error:any){
 
-          <p className="text-xl text-[var(--pp-text)]">{question}</p>
+    console.log(
+      "EVALUATE ERROR:",
+      error.response?.data || error.message
+    );
 
-          <textarea
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Type your answer here..."
-            disabled={!!feedback}
-            className="mt-6 w-full h-40 bg-black/20 border border-[var(--pp-line)] rounded-xl p-4 text-[var(--pp-text)] disabled:opacity-60"
-          />
+  }
+  finally{
+    setLoading(false);
+  }
 
-          {!feedback ? (
-            <button
-              type="button"
-              onClick={submitAnswer}
-              disabled={loading}
-              className="mt-5 bg-[var(--pp-ink-soft)] px-6 py-3 rounded-xl text-[var(--pp-text)] cursor-pointer hover:bg-[var(--pp-ink)] disabled:opacity-60"
-            >
-              {loading ? "Evaluating..." : "Submit Answer"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={goToNextQuestion}
-              className="mt-5 bg-[var(--pp-ink)] px-6 py-3 rounded-xl text-[var(--pp-text)] cursor-pointer hover:bg-[var(--pp-ink-soft)]"
-            >
-              {isLastQuestion ? "Finish Interview" : "Next Question →"}
-            </button>
-          )}
-        </div>
-      )}
+};
 
-      {feedback && !finished && (
-        <div className="mt-8 max-w-3xl bg-[var(--pp-panel)] border border-[var(--pp-line)] rounded-3xl p-8">
-          <h2 className="text-2xl text-[var(--pp-text)] font-bold">AI Feedback</h2>
 
-          <p className="text-[var(--pp-pass)] mt-4 text-xl">
-            Score : {feedback.score}/10
-          </p>
 
-          <p className="text-[var(--pp-text-muted)] mt-4">{feedback.feedback}</p>
 
-          <p className="text-[var(--pp-text-muted)] mt-4">
-            Improvement:
-            <br />
-            {feedback.improvements}
-          </p>
-        </div>
-      )}
 
-      {finished && scores.length > 0 && (
-        <div className="mt-8 max-w-3xl bg-[var(--pp-ink)]/10 border border-[var(--pp-ink)]/25 rounded-3xl p-8">
-          <h2 className="text-2xl text-[var(--pp-text)] font-bold">
-            Interview Completed 🎉
-          </h2>
 
-          <p className="text-[var(--pp-text-muted)] mt-4">
-            Questions Attempted: {scores.length} / {questions.length}
-          </p>
 
-          <p className="text-[var(--pp-text-muted)] mt-2 text-xl">
-            Average Score :{" "}
-            {(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)}
-            /10
-          </p>
+return (
 
-          <div className="flex gap-4 mt-6">
-            <button
-              onClick={generateQuestion}
-              className="bg-[var(--pp-ink)] px-6 py-3 rounded-xl text-[var(--pp-text)] hover:bg-[var(--pp-ink-soft)]"
-            >
-              Practice Again
-            </button>
+<div className="min-h-screen bg-white p-4 sm:p-6 md:p-8">
 
-            <button
-              onClick={() => router.push("/history")}
-              className="bg-[var(--pp-panel-raised)] border border-[var(--pp-line)] px-6 py-3 rounded-xl text-[var(--pp-text)] hover:bg-[var(--pp-line)]"
-            >
-              View History
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+
+<h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">
+AI Mock Interview 🤖
+</h1>
+
+
+
+
+
+<button
+
+onClick={generateQuestion}
+
+className="bg-orange-600 px-6 py-3 rounded-xl text-white"
+
+>
+
+{
+loading
+?
+"Generating..."
+:
+"Start Interview"
+}
+
+</button>
+
+
+
+
+
+
+{
+question &&
+
+<div className="mt-8 max-w-3xl bg-orange-50 border border-orange-200 rounded-3xl p-5 sm:p-8">
+
+
+<h2 className="text-orange-600 mb-4">
+
+Question {current+1} / {questions.length}
+
+</h2>
+
+
+
+<p className="text-lg sm:text-xl text-gray-900">
+
+{question}
+
+</p>
+
+
+
+
+
+<textarea
+
+value={answer}
+
+onChange={(e)=>setAnswer(e.target.value)}
+
+placeholder="Type your answer here..."
+
+className="
+mt-6
+w-full
+h-40
+bg-orange-50
+border
+border-orange-200
+rounded-xl
+p-4
+text-gray-900
+"
+
+/>
+
+
+
+
+
+<button
+  type="button"
+  onClick={() => {
+    console.log("SUBMIT CLICKED");
+    submitAnswer();
+  }}
+  className="
+  mt-5
+  bg-amber-600
+  px-6
+  py-3
+  rounded-xl
+  text-white
+  cursor-pointer
+  hover:bg-amber-700
+  "
+>
+  Submit Answer
+</button>
+
+
+
+</div>
+
+}
+
+
+
+
+
+
+
+
+{
+feedback &&
+
+<div className="mt-8 max-w-3xl bg-orange-50 border border-orange-200 rounded-3xl p-5 sm:p-8">
+
+
+<h2 className="text-2xl text-gray-900 font-bold">
+AI Feedback
+</h2>
+
+
+
+<p className="text-green-600 mt-4 text-xl">
+
+Score : {feedback.score}/10
+
+</p>
+
+
+
+
+<p className="text-gray-700 mt-4">
+
+{feedback.feedback}
+
+</p>
+
+
+
+<p className="text-gray-600 mt-4">
+
+Improvement:
+<br/>
+
+{feedback.improvements}
+
+</p>
+
+
+
+</div>
+
+}
+
+
+
+
+
+
+
+{
+scores.length>0 && current === questions.length-1 &&
+
+<div className="mt-8 max-w-3xl bg-orange-500/10 border border-orange-500/20 rounded-3xl p-5 sm:p-8">
+
+
+<h2 className="text-2xl text-gray-900 font-bold">
+
+Interview Completed 🎉
+
+</h2>
+
+
+
+<p className="text-gray-700 mt-4">
+
+Average Score :
+
+{
+(
+scores.reduce((a,b)=>a+b,0)
+/ scores.length
+).toFixed(1)
+}
+
+/10
+
+</p>
+
+
+</div>
+
+}
+
+
+
+
+
+</div>
+
+)
+
 }

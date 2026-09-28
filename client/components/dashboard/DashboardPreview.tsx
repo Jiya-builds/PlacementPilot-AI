@@ -10,29 +10,29 @@ export default function DashboardPreview() {
 
   return (
 
-    <section className="py-28 px-6">
+    <section className="py-16 md:py-28 px-6">
 
 
-      <h2 className="text-center text-5xl font-bold">
+      <h2 className="text-center text-3xl sm:text-4xl md:text-5xl font-bold">
         Your AI Dashboard
       </h2>
 
 
-      <p className="text-center mt-5 text-[var(--pp-text-muted)]">
+      <p className="text-center mt-5 text-gray-600">
         Everything at one place.
       </p>
 
 
 
-      <div className="flex justify-center gap-5 mt-10">
+      <div className="flex flex-wrap justify-center gap-3 sm:gap-5 mt-10">
 
 
         <button
           onClick={() => router.push("/login")}
           className="
           px-6 py-3 rounded-xl 
-          bg-[var(--pp-ink)] 
-          text-[var(--pp-text)]
+          bg-orange-600 
+          text-white
           "
         >
           Analyze Resume
@@ -44,8 +44,8 @@ export default function DashboardPreview() {
           onClick={() => router.push("/login")}
           className="
           px-6 py-3 rounded-xl 
-          bg-[var(--pp-ink-soft)] 
-          text-[var(--pp-text)]
+          bg-amber-600 
+          text-white
           "
         >
           Start Interview
@@ -64,7 +64,7 @@ export default function DashboardPreview() {
 
         viewport={{once:true}}
 
-        className="max-w-6xl mx-auto mt-20 rounded-[40px] border border-[var(--pp-line)] bg-[var(--pp-panel)] backdrop-blur-2xl p-10"
+        className="max-w-6xl mx-auto mt-20 rounded-[28px] md:rounded-[40px] border border-orange-200 bg-orange-50 backdrop-blur-2xl p-6 md:p-10"
 
       >
 

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 export default function ResumeUploadPage(){
 
   const [file,setFile] = useState<File | null>(null);
-  const [jobDescription, setJobDescription] = useState("");
   const [loading,setLoading] = useState(false);
   const [message,setMessage] = useState("");
 
@@ -32,12 +31,6 @@ export default function ResumeUploadPage(){
       "resume",
       file
     );
-
-    // Optional — lets the AI tailor its analysis against a specific
-    // job posting instead of just general placement readiness.
-    if (jobDescription.trim()) {
-      formData.append("jobDescription", jobDescription.trim());
-    }
 
 
     try{
@@ -106,18 +99,18 @@ export default function ResumeUploadPage(){
 
   return (
 
-    <div className="min-h-screen bg-[var(--pp-bg)] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
 
 
-      <div className="max-w-xl w-full bg-[var(--pp-panel)] border border-[var(--pp-line)] rounded-3xl p-10">
+      <div className="max-w-xl w-full bg-orange-50 border border-orange-200 rounded-3xl p-6 sm:p-10">
 
 
-        <h1 className="text-3xl font-bold text-[var(--pp-text)] text-center">
+        <h1 className="text-3xl font-bold text-gray-900 text-center">
           Upload Resume 📄
         </h1>
 
 
-        <p className="text-[var(--pp-text-muted)] text-center mt-3">
+        <p className="text-gray-600 text-center mt-3">
           Upload your PDF resume and let AI analyze it.
         </p>
 
@@ -139,50 +132,15 @@ export default function ResumeUploadPage(){
           className="
           mt-8
           w-full
-          text-[var(--pp-text)]
-          bg-[var(--pp-panel)]
+          text-gray-900
+          bg-orange-50
           border
-          border-[var(--pp-line)]
+          border-orange-200
           rounded-xl
           p-4
           "
 
         />
-
-        {/* Job description — optional, tailors the analysis to a
-            specific role instead of just general placement readiness */}
-        <div className="mt-6">
-          <label className="text-sm text-[var(--pp-text-muted)]">
-            Job Description <span className="text-[var(--pp-text-faint)]">(optional)</span>
-          </label>
-
-          <textarea
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Paste a job description here to see how well your resume matches this specific role..."
-            rows={6}
-            className="
-            mt-2
-            w-full
-            text-[var(--pp-text)]
-            bg-[var(--pp-panel)]
-            border
-            border-[var(--pp-line)]
-            rounded-xl
-            p-4
-            text-sm
-            outline-none
-            focus:border-[var(--pp-ink)]
-            placeholder:text-[var(--pp-text-faint)]
-            resize-none
-            "
-          />
-
-          <p className="text-xs text-[var(--pp-text-faint)] mt-2">
-            Leave this blank for a general resume analysis, or paste a job
-            description to get a match score against that specific role.
-          </p>
-        </div>
 
 
 
@@ -197,9 +155,9 @@ export default function ResumeUploadPage(){
           py-3
           rounded-xl
           bg-gradient-to-r
-          from-[var(--pp-ink)]
-          to-[var(--pp-ink-soft)]
-          text-[var(--pp-text)]
+          from-orange-600
+          to-amber-600
+          text-white
           font-semibold
           "
 
@@ -221,7 +179,7 @@ export default function ResumeUploadPage(){
         {
           message &&
 
-          <p className="text-center text-[var(--pp-ink)] mt-5">
+          <p className="text-center text-orange-600 mt-5">
             {message}
           </p>
 

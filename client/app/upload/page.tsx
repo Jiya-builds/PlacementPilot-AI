@@ -50,11 +50,11 @@ export default function UploadPage(){
 
 
 return(
-<div className="min-h-screen bg-[var(--pp-bg)] flex items-center justify-center">
+<div className="min-h-screen bg-white flex items-center justify-center p-4">
 
-<div className="bg-[var(--pp-panel)] border border-[var(--pp-line)] rounded-3xl p-10">
+<div className="w-full max-w-xl bg-orange-50 border border-orange-200 rounded-3xl p-6 sm:p-10">
 
-<h1 className="text-3xl text-[var(--pp-text)] font-bold mb-6">
+<h1 className="text-3xl text-gray-900 font-bold mb-6">
 Upload Resume
 </h1>
 
@@ -63,19 +63,19 @@ Upload Resume
 type="file"
 accept=".pdf"
 onChange={(e)=>setFile(e.target.files?.[0] || null)}
-className="text-[var(--pp-text)]"
+className="text-gray-900"
 />
 
 
 <button
 onClick={uploadResume}
-className="mt-6 w-full bg-[var(--pp-ink)] py-3 rounded-xl text-[var(--pp-text)]"
+className="mt-6 w-full bg-orange-600 py-3 rounded-xl text-white"
 >
 Upload
 </button>
 
 
-<p className="text-[var(--pp-text-muted)] mt-4">
+<p className="text-gray-700 mt-4">
 {message}
 </p>
 

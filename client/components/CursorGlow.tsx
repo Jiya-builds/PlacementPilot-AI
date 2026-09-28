@@ -34,7 +34,7 @@ export default function CursorGlow() {
         x,
         y,
       }}
-      className="pointer-events-none fixed top-0 left-0 z-0 h-[400px] w-[400px] rounded-full bg-[var(--pp-ink)]/20 blur-[140px]"
+      className="pointer-events-none hidden md:block fixed top-0 left-0 z-0 h-[400px] w-[400px] rounded-full bg-orange-600/20 blur-[140px]"
     />
   );
 }

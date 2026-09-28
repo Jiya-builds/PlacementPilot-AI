@@ -66,9 +66,9 @@ console.log(res.data.analysis);
 
     return(
 
-      <div className="min-h-screen bg-[var(--pp-bg)] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
 
-        <h1 className="text-[var(--pp-text)] text-xl">
+        <h1 className="text-gray-900 text-xl">
           Generating AI Roadmap...
         </h1>
 
@@ -83,10 +83,10 @@ console.log(res.data.analysis);
 
   return(
 
-    <div className="min-h-screen bg-[var(--pp-bg)] p-10">
+    <div className="min-h-screen bg-white p-4 sm:p-6 md:p-10">
 
 
-      <h1 className="text-4xl font-bold text-[var(--pp-text)] mb-8">
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">
         AI Career Roadmap 🚀
       </h1>
 
@@ -96,12 +96,12 @@ console.log(res.data.analysis);
 
       {/* Growth Plan */}
 
-<div className="rounded-3xl border border-[var(--pp-line)] bg-[var(--pp-panel)] p-8">
+<div className="rounded-3xl border border-orange-200 bg-orange-50 p-5 sm:p-8">
 
   <div className="flex items-center gap-3 mb-6">
-    <Rocket className="text-[var(--pp-ink)]"/>
+    <Rocket className="text-orange-600"/>
 
-    <h2 className="text-2xl text-[var(--pp-text)] font-bold">
+    <h2 className="text-2xl text-gray-900 font-bold">
       Your Growth Plan
     </h2>
   </div>
@@ -125,10 +125,10 @@ console.log(res.data.analysis);
 
 <div
 key={index}
-className="bg-[var(--pp-panel)] rounded-xl p-6 mb-4"
+className="bg-orange-50 rounded-xl p-6 mb-4"
 >
 
-<h3 className="text-[var(--pp-ink)] font-bold text-xl mb-4">
+<h3 className="text-orange-600 font-bold text-xl mb-4">
 {section.title}
 </h3>
 
@@ -137,7 +137,7 @@ section.data?.map((item:string,i:number)=>(
 
 <p
 key={i}
-className="text-[var(--pp-text-muted)] mb-2"
+className="text-gray-700 mb-2"
 >
 ✓ {item}
 </p>
@@ -160,19 +160,19 @@ className="text-[var(--pp-text-muted)] mb-2"
       mt-8
       rounded-3xl
       border
-      border-[var(--pp-line)]
-      bg-[var(--pp-panel)]
-      p-8
+      border-orange-200
+      bg-orange-50
+      p-5 sm:p-8
       ">
 
 
         <div className="flex items-center gap-3 mb-5">
 
 
-          <Lightbulb className="text-[var(--pp-gold)]"/>
+          <Lightbulb className="text-amber-600"/>
 
 
-          <h2 className="text-2xl text-[var(--pp-text)] font-bold">
+          <h2 className="text-2xl text-gray-900 font-bold">
             Skills To Learn
           </h2>
 
@@ -195,8 +195,8 @@ className="text-[var(--pp-text-muted)] mb-2"
                 px-4
                 py-2
                 rounded-full
-                bg-[var(--pp-ink)]/20
-                text-[var(--pp-ink)]
+                bg-orange-600/20
+                text-orange-700
                 "
                 >
 
@@ -229,9 +229,9 @@ className="text-[var(--pp-text-muted)] mb-2"
       mt-8
       rounded-3xl
       border
-      border-[var(--pp-line)]
-      bg-[var(--pp-panel)]
-      p-8
+      border-orange-200
+      bg-orange-50
+      p-5 sm:p-8
       ">
 
 
@@ -239,10 +239,10 @@ className="text-[var(--pp-text-muted)] mb-2"
         <div className="flex items-center gap-3 mb-5">
 
 
-          <Code className="text-[var(--pp-ink)]"/>
+          <Code className="text-yellow-600"/>
 
 
-          <h2 className="text-2xl text-[var(--pp-text)] font-bold">
+          <h2 className="text-2xl text-gray-900 font-bold">
             Suggested Projects
           </h2>
 

@@ -2,17 +2,14 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export default function CTA() {
-  const router = useRouter();
-
   return (
-    <section className="relative py-32 px-6 overflow-hidden">
+    <section className="relative py-20 md:py-32 px-6 overflow-hidden">
 
       {/* Background Glow */}
       <div className="absolute inset-0 flex justify-center">
-        <div className="w-[700px] h-[700px] bg-[var(--pp-ink)]/20 blur-[150px] rounded-full" />
+        <div className="w-[350px] h-[350px] sm:w-[700px] sm:h-[700px] bg-orange-600/20 blur-[150px] rounded-full" />
       </div>
 
       <div className="relative max-w-5xl mx-auto">
@@ -21,10 +18,10 @@ export default function CTA() {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: .6 }}
-          className="rounded-[32px] border border-[var(--pp-line)] bg-[var(--pp-panel)] backdrop-blur-2xl p-14 text-center"
+          className="rounded-[32px] border border-orange-200 bg-orange-50 backdrop-blur-2xl p-14 text-center"
         >
 
-          <span className="px-4 py-2 rounded-full bg-[var(--pp-ink)]/10 border border-[var(--pp-ink)]/25 text-[var(--pp-ink)]">
+          <span className="px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-700">
             Start Today 🚀
           </span>
 
@@ -34,7 +31,7 @@ export default function CTA() {
             Your Dream Placement?
           </h2>
 
-          <p className="mt-6 text-lg text-[var(--pp-text-muted)] max-w-2xl mx-auto leading-8">
+          <p className="mt-6 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-8">
             Analyze your resume with AI, practice mock interviews,
             improve your ATS score and receive a personalized
             placement roadmap—all in one platform.
@@ -42,21 +39,12 @@ export default function CTA() {
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center mt-12">
 
-            <button
-              onClick={() => router.push("/register")}
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-[var(--pp-ink)] to-[var(--pp-ink-soft)] font-semibold hover:scale-105 transition flex items-center justify-center gap-2"
-            >
+            <button className="px-8 py-4 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 font-semibold hover:scale-105 transition flex items-center justify-center gap-2 text-white">
               Get Started Free
               <ArrowRight size={20}/>
             </button>
 
-            <button
-              onClick={() => {
-                const el = document.getElementById("how-it-works");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="px-8 py-4 rounded-xl border border-[var(--pp-line)] hover:bg-[var(--pp-panel-raised)] transition"
-            >
+            <button className="px-8 py-4 rounded-xl border border-orange-200 hover:bg-orange-100/70 transition">
               View Demo
             </button>
 

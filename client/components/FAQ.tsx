@@ -36,19 +36,19 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-28 px-6">
+    <section className="py-16 md:py-28 px-6">
       <div className="max-w-4xl mx-auto">
 
         <div className="text-center mb-14">
-          <span className="px-4 py-2 rounded-full bg-[var(--pp-ink)]/10 border border-[var(--pp-ink)]/25 text-[var(--pp-ink)]">
+          <span className="px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-700">
             FAQ
           </span>
 
-          <h2 className="text-5xl font-bold mt-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mt-6">
             Frequently Asked Questions
           </h2>
 
-          <p className="text-[var(--pp-text-muted)] mt-5">
+          <p className="text-gray-600 mt-5">
             Everything you need to know about PlacementPilot AI.
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function FAQ() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="rounded-2xl border border-[var(--pp-line)] bg-[var(--pp-panel)] backdrop-blur-xl overflow-hidden"
+              className="rounded-2xl border border-orange-200 bg-orange-50 backdrop-blur-xl overflow-hidden"
             >
               <button
                 onClick={() =>
@@ -86,7 +86,7 @@ export default function FAQ() {
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <p className="px-6 pb-6 text-[var(--pp-text-muted)] leading-7">
+                    <p className="px-6 pb-6 text-gray-600 leading-7">
                       {faq.answer}
                     </p>
                   </motion.div>

@@ -58,9 +58,9 @@ export default function HistoryPage(){
   if(loading){
 
     return(
-      <div className="min-h-screen bg-[var(--pp-bg)] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
 
-        <h1 className="text-[var(--pp-text)] text-xl">
+        <h1 className="text-gray-900 text-xl">
           Loading History...
         </h1>
 
@@ -73,10 +73,10 @@ export default function HistoryPage(){
 
   return(
 
-    <div className="min-h-screen bg-[var(--pp-bg)] p-10">
+    <div className="min-h-screen bg-white p-4 sm:p-6 md:p-10">
 
 
-      <h1 className="text-4xl font-bold text-[var(--pp-text)] mb-8">
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">
         Interview History 📚
       </h1>
 
@@ -86,7 +86,7 @@ export default function HistoryPage(){
         history.length === 0 ?
 
         (
-          <div className="text-[var(--pp-text-muted)] text-lg">
+          <div className="text-gray-600 text-lg">
             No interviews attempted yet.
           </div>
         )
@@ -108,21 +108,21 @@ export default function HistoryPage(){
               className="
               rounded-3xl
               border
-              border-[var(--pp-line)]
-              bg-[var(--pp-panel)]
-              p-8
+              border-orange-200
+              bg-orange-50
+              p-5 sm:p-8
               "
             >
 
 
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-3">
 
-                <h2 className="text-[var(--pp-ink)] text-xl font-bold">
+                <h2 className="text-orange-600 text-xl font-bold">
                   Interview {index+1}
                 </h2>
 
 
-                <span className="text-[var(--pp-pass)] font-bold">
+                <span className="text-green-600 font-bold">
                   Score {item.score}/10
                 </span>
 
@@ -133,11 +133,11 @@ export default function HistoryPage(){
 
               <div className="mt-5">
 
-                <p className="text-[var(--pp-text-muted)]">
+                <p className="text-gray-600">
                   Question
                 </p>
 
-                <p className="text-[var(--pp-text)] text-lg mt-2">
+                <p className="text-gray-900 text-lg mt-2">
                   {item.question}
                 </p>
 
@@ -149,11 +149,11 @@ export default function HistoryPage(){
 
               <div className="mt-5">
 
-                <p className="text-[var(--pp-text-muted)]">
+                <p className="text-gray-600">
                   Your Answer
                 </p>
 
-                <p className="text-[var(--pp-text-muted)] mt-2">
+                <p className="text-gray-700 mt-2">
                   {item.answer}
                 </p>
 
@@ -164,11 +164,11 @@ export default function HistoryPage(){
 
               <div className="mt-5">
 
-                <p className="text-[var(--pp-text-muted)]">
+                <p className="text-gray-600">
                   AI Feedback
                 </p>
 
-                <p className="text-[var(--pp-text-muted)] mt-2">
+                <p className="text-gray-700 mt-2">
                   {item.feedback}
                 </p>
 

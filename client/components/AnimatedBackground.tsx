@@ -1,65 +1,62 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { Particles, ParticlesProvider } from "@tsparticles/react";
-import { loadSlim } from "@tsparticles/slim";
-import type { Engine } from "@tsparticles/engine";
+import Particles from "react-tsparticles";
+import { loadSlim } from "tsparticles-slim";
+import { useCallback } from "react";
+import type { Engine } from "tsparticles-engine";
 
 export default function AnimatedBackground() {
   const particlesInit = useCallback(async (engine: Engine) => {
     await loadSlim(engine);
   }, []);
 
-  const options = useMemo(
-    () => ({
-      fullScreen: {
-        enable: true,
-        zIndex: -1,
-      },
-
-      background: {
-        color: "#050816",
-      },
-
-      particles: {
-        number: {
-          value: 60,
-        },
-
-        color: {
-          value: ["#8b5cf6", "#3b82f6", "#06b6d4"],
-        },
-
-        links: {
+  return (
+    <Particles
+      id="particles"
+      init={particlesInit}
+      options={{
+        fullScreen: {
           enable: true,
-          color: "#8b5cf6",
-          distance: 150,
-          opacity: 0.2,
+          zIndex: -1,
         },
 
-        move: {
-          enable: true,
-          speed: 1,
+        background: {
+          color: "#ffffff",
         },
 
-        opacity: {
-          value: 0.4,
-        },
+        particles: {
+          number: {
+            value: 60,
+          },
 
-        size: {
-          value: {
-            min: 1,
-            max: 3,
+          color: {
+            value: ["#f97316", "#fb923c", "#f59e0b"],
+          },
+
+          links: {
+            enable: true,
+            color: "#f97316",
+            distance: 150,
+            opacity: 0.2,
+          },
+
+          move: {
+            enable: true,
+            speed: 1,
+          },
+
+          opacity: {
+            value: 0.4,
+          },
+
+          size: {
+            value: {
+              min: 1,
+              max: 3,
+            },
           },
         },
-      },
-    }),
-    []
-  );
-
-  return (
-    <ParticlesProvider init={particlesInit}>
-      <Particles id="particles" options={options} />
-    </ParticlesProvider>
+      }}
+    />
   );
 }

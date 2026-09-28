@@ -17,7 +17,7 @@ export default function TrustedCompanies() {
   return (
     <section className="py-16">
 
-      <p className="text-center text-[var(--pp-text-muted)] uppercase tracking-[6px]">
+      <p className="px-4 text-center text-gray-600 uppercase tracking-[3px] sm:tracking-[6px] text-sm sm:text-base">
         Inspired By Top Tech Companies
       </p>
 
@@ -33,7 +33,7 @@ export default function TrustedCompanies() {
             ease: "linear",
           }}
 
-          className="flex gap-16 whitespace-nowrap text-4xl font-bold text-[var(--pp-text)]/20"
+          className="flex gap-10 md:gap-16 whitespace-nowrap text-2xl md:text-4xl font-bold text-orange-300"
         >
           {[...companies, ...companies].map((c, i) => (
             <span key={i}>{c}</span>

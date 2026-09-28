@@ -28,13 +28,13 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="max-w-7xl mx-auto py-28 px-6">
+    <section className="max-w-7xl mx-auto py-16 md:py-28 px-6">
 
-      <h2 className="text-5xl font-bold text-center">
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center">
         How It Works
       </h2>
 
-      <p className="text-center text-[var(--pp-text-muted)] mt-5">
+      <p className="text-center text-gray-600 mt-5">
         Four simple steps to become placement ready.
       </p>
 
@@ -44,10 +44,10 @@ export default function HowItWorks() {
           <motion.div
             key={i}
             whileHover={{ y: -8 }}
-            className="relative rounded-3xl bg-[var(--pp-panel)] border border-[var(--pp-line)] backdrop-blur-xl p-8"
+            className="relative rounded-3xl bg-orange-50 border border-orange-200 backdrop-blur-xl p-8"
           >
 
-            <div className="w-14 h-14 rounded-2xl bg-[var(--pp-ink)] flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-orange-600 flex items-center justify-center text-white">
               <step.icon size={28}/>
             </div>
 
@@ -55,11 +55,11 @@ export default function HowItWorks() {
               {step.title}
             </h3>
 
-            <p className="mt-3 text-[var(--pp-text-muted)]">
+            <p className="mt-3 text-gray-600">
               {step.desc}
             </p>
 
-            <div className="absolute top-5 right-6 text-5xl text-[var(--pp-text)]/10 font-bold">
+            <div className="absolute top-5 right-6 text-3xl sm:text-4xl md:text-5xl text-orange-200/70 font-bold">
               0{i+1}
             </div>
 

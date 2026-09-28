@@ -1,34 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import AuthBackground from "@/components/AuthBackground";
 import AuthInput from "@/components/AuthInput";
 import api from "@/services/api";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
-  );
-}
-
-function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [justRegistered, setJustRegistered] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    if (searchParams.get("registered") === "true") {
-      setJustRegistered(true);
-    }
-  }, [searchParams]);
 
 
  const handleLogin = async (e: React.FormEvent) => {
@@ -74,30 +57,25 @@ function LoginForm() {
 
 
   return (
-    <main className="relative min-h-screen bg-[var(--pp-bg)] overflow-hidden flex items-center justify-center px-6">
+    <main className="relative min-h-screen bg-white overflow-hidden flex items-center justify-center px-6">
 
       <AuthBackground />
 
 
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-[var(--pp-line)] bg-[var(--pp-panel)] backdrop-blur-2xl p-10">
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-orange-200 bg-orange-50 backdrop-blur-2xl p-6 sm:p-10">
 
 
         <div className="text-center">
 
-          <h1 className="text-4xl font-bold text-[var(--pp-text)]">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
             Welcome Back 👋
           </h1>
 
 
-          <p className="text-[var(--pp-text-muted)] mt-3">
+          <p className="text-gray-600 mt-3">
             Continue your placement journey.
           </p>
 
-          {justRegistered && (
-            <p className="mt-4 text-sm text-[var(--pp-pass)] bg-green-500/10 border border-green-500/20 rounded-xl py-2 px-3">
-              Account created successfully. Please sign in.
-            </p>
-          )}
 
         </div>
 
@@ -128,9 +106,9 @@ function LoginForm() {
 
 
 
-          <div className="flex items-center text-sm">
+          <div className="flex items-center justify-between text-sm">
 
-            <label className="flex items-center gap-2 text-[var(--pp-text-muted)]">
+            <label className="flex items-center gap-2 text-gray-600">
 
               <input type="checkbox" />
 
@@ -139,13 +117,21 @@ function LoginForm() {
             </label>
 
 
+            <button
+              type="button"
+              className="text-orange-600 hover:text-orange-700"
+            >
+              Forgot Password?
+            </button>
+
+
           </div>
 
 
 
          <button
   type="submit"
-  className="w-full py-3 rounded-xl bg-gradient-to-r from-[var(--pp-ink)] to-[var(--pp-ink-soft)] font-semibold hover:scale-[1.02] transition"
+  className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 font-semibold hover:scale-[1.02] transition text-white"
 >
   Sign In
 </button>
@@ -155,16 +141,13 @@ function LoginForm() {
 
 
 
-        <p className="text-center mt-8 text-[var(--pp-text-muted)]">
+        <p className="text-center mt-8 text-gray-600">
 
           Don't have an account?{" "}
 
-          <Link
-            href="/register"
-            className="text-[var(--pp-ink)] cursor-pointer hover:underline"
-          >
+          <span className="text-orange-600 cursor-pointer hover:underline">
             Create Account
-          </Link>
+          </span>
 
         </p>
 

@@ -14,7 +14,7 @@ import FAQ from "@/components/FAQ";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[var(--pp-bg)] text-[var(--pp-text)]">
+    <main className="min-h-screen overflow-x-hidden bg-white text-gray-900">
 
       <AnimatedBackground />
       <CursorGlow />

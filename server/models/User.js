@@ -1,155 +1,5 @@
 import mongoose from "mongoose";
 
-const projectSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      default: "",
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    technologies: {
-      type: [String],
-      default: [],
-    },
-  },
-  { _id: false }
-);
-
-const roadmapSchema = new mongoose.Schema(
-  {
-    shortTerm: {
-      type: [String],
-      default: [],
-    },
-    midTerm: {
-      type: [String],
-      default: [],
-    },
-    longTerm: {
-      type: [String],
-      default: [],
-    },
-  },
-  { _id: false }
-);
-
-const jobMatchSchema = new mongoose.Schema(
-  {
-    matchScore: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
-    matchedSkills: {
-      type: [String],
-      default: [],
-    },
-    missingForJob: {
-      type: [String],
-      default: [],
-    },
-    summary: {
-      type: String,
-      default: "",
-    },
-  },
-  { _id: false }
-);
-
-const analysisSchema = new mongoose.Schema(
-  {
-    resumeScore: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
-
-    atsScore: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
-
-    strengths: {
-      type: [String],
-      default: [],
-    },
-
-    weaknesses: {
-      type: [String],
-      default: [],
-    },
-
-    missingSkills: {
-      type: [String],
-      default: [],
-    },
-
-    suggestedProjects: {
-      type: [projectSchema],
-      default: [],
-    },
-
-    interviewQuestions: {
-      type: [String],
-      default: [],
-    },
-
-    roadmap: {
-      type: roadmapSchema,
-      default: () => ({
-        shortTerm: [],
-        midTerm: [],
-        longTerm: [],
-      }),
-    },
-
-    jobMatch: {
-      type: jobMatchSchema,
-      default: null,
-    },
-  },
-  { _id: false }
-);
-
-const interviewSchema = new mongoose.Schema(
-  {
-    question: {
-      type: String,
-      default: "",
-    },
-
-    answer: {
-      type: String,
-      default: "",
-    },
-
-    score: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
-
-    feedback: {
-      type: String,
-      default: "",
-    },
-
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-  { _id: false }
-);
-
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -163,7 +13,6 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-      trim: true,
     },
 
     password: {
@@ -189,13 +38,13 @@ const userSchema = new mongoose.Schema(
 
     graduationYear: {
       type: Number,
-      default: null,
     },
 
-    skills: {
-      type: [String],
-      default: [],
-    },
+    skills: [
+      {
+        type: String,
+      },
+    ],
 
     github: {
       type: String,
@@ -215,22 +64,93 @@ const userSchema = new mongoose.Schema(
     resume: {
       type: String,
       default: "",
+    },analysis: {
+  resumeScore: {
+    type: Number,
+  },
+
+  atsScore: {
+    type: Number,
+  },
+
+  strengths: [
+    {
+      type: String,
+    },
+  ],
+
+  weaknesses: [
+    {
+      type: String,
+    },
+  ],
+
+  missingSkills: [
+    {
+      type: String,
+    },
+  ],
+
+  suggestedProjects: [
+  {
+    title: String,
+    description: String,
+    technologies: [String]
+  }
+],
+
+  interviewQuestions: [
+    {
+      type: String,
+    },
+  ],
+
+  roadmap: {
+    shortTerm: [
+      {
+        type: String,
+      },
+    ],
+
+    midTerm: [
+      {
+        type: String,
+      },
+    ],
+
+    longTerm: [
+      {
+        type: String,
+      },
+    ],
+  },
+},
+interviews: [
+  {
+    question: {
+      type: String,
     },
 
-    jobDescription: {
+    answer: {
+      type: String,
+    },
+
+    score: {
+      type: Number,
+      default: 0,
+    },
+
+    feedback: {
       type: String,
       default: "",
     },
 
-    analysis: {
-      type: analysisSchema,
-      default: null,
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
-
-    interviews: {
-      type: [interviewSchema],
-      default: [],
-    },
+  },
+],
 
     role: {
       type: String,
