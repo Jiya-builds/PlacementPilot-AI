@@ -3,7 +3,9 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// ===============================
 // SIGNUP
+// ===============================
 export const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -15,7 +17,18 @@ export const signup = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(409).json({
@@ -27,8 +40,8 @@ export const signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
@@ -58,7 +71,9 @@ export const signup = async (req, res) => {
   }
 };
 
+// ===============================
 // LOGIN
+// ===============================
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -70,7 +85,18 @@ export const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (!user) {
       return res.status(401).json({
@@ -79,21 +105,15 @@ export const login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
-      });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET is missing");
-
-      return res.status(500).json({
-        success: false,
-        message: "Server configuration error",
       });
     }
 
@@ -119,6 +139,64 @@ export const login = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Login Failed",
+    });
+  }
+};
+
+// ===============================
+// GET LOGGED IN USER
+// ===============================
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("GetMe Error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch user",
+    });
+  }
+};
+
+// ===============================
+// GET USER PROFILE
+// ===============================
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("GetProfile Error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch profile",
     });
   }
 };
