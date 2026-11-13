@@ -64,93 +64,102 @@ const userSchema = new mongoose.Schema(
     resume: {
       type: String,
       default: "",
-    },analysis: {
-  resumeScore: {
-    type: Number,
-  },
-
-  atsScore: {
-    type: Number,
-  },
-
-  strengths: [
-    {
-      type: String,
-    },
-  ],
-
-  weaknesses: [
-    {
-      type: String,
-    },
-  ],
-
-  missingSkills: [
-    {
-      type: String,
-    },
-  ],
-
-  suggestedProjects: [
-  {
-    title: String,
-    description: String,
-    technologies: [String]
-  }
-],
-
-  interviewQuestions: [
-    {
-      type: String,
-    },
-  ],
-
-  roadmap: {
-    shortTerm: [
-      {
-        type: String,
-      },
-    ],
-
-    midTerm: [
-      {
-        type: String,
-      },
-    ],
-
-    longTerm: [
-      {
-        type: String,
-      },
-    ],
-  },
-},
-interviews: [
-  {
-    question: {
-      type: String,
     },
 
-    answer: {
-      type: String,
-    },
-
-    score: {
-      type: Number,
-      default: 0,
-    },
-
-    feedback: {
+    // NEW: PDF se nikala hua text (disk pe file ki zarurat nahi)
+    resumeText: {
       type: String,
       default: "",
     },
 
-    createdAt: {
-      type: Date,
-      default: Date.now,
+    analysis: {
+      resumeScore: {
+        type: Number,
+      },
+
+      atsScore: {
+        type: Number,
+      },
+
+      strengths: [
+        {
+          type: String,
+        },
+      ],
+
+      weaknesses: [
+        {
+          type: String,
+        },
+      ],
+
+      missingSkills: [
+        {
+          type: String,
+        },
+      ],
+
+      suggestedProjects: [
+        {
+          title: String,
+          description: String,
+          technologies: [String],
+        },
+      ],
+
+      interviewQuestions: [
+        {
+          type: String,
+        },
+      ],
+
+      roadmap: {
+        shortTerm: [
+          {
+            type: String,
+          },
+        ],
+
+        midTerm: [
+          {
+            type: String,
+          },
+        ],
+
+        longTerm: [
+          {
+            type: String,
+          },
+        ],
+      },
     },
-  },
-],
+
+    interviews: [
+      {
+        question: {
+          type: String,
+        },
+
+        answer: {
+          type: String,
+        },
+
+        score: {
+          type: Number,
+          default: 0,
+        },
+
+        feedback: {
+          type: String,
+          default: "",
+        },
+
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
 
     role: {
       type: String,
