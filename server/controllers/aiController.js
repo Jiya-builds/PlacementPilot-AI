@@ -4,7 +4,7 @@ import User from "../models/User.js";
 export const testAI = async (req, res) => {
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "   openai/gpt-oss-20b",
       messages: [
         {
           role: "user",
@@ -41,7 +41,7 @@ export const analyzeResume = async (req, res) => {
     const text = user.resumeText;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "   openai/gpt-oss-20b",
       messages: [
         {
           role: "system",
@@ -202,7 +202,7 @@ export const generateInterviewQuestions = async (req, res) => {
     }
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "   openai/gpt-oss-20b",
       messages: [
         {
           role: "system",
@@ -282,7 +282,7 @@ export const evaluateAnswer = async (req, res) => {
     }
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "   openai/gpt-oss-20b",
       messages: [
         {
           role: "system",
